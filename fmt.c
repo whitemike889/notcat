@@ -92,4 +92,5 @@ extern void print_note(Note *n) {
 	printf("%c", *c);
     }
     printf((pct ? "%%\n" : "\n"));
+    fflush(stdout);
 }
