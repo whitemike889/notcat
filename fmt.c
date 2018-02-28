@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "notcat.h"
 
@@ -37,7 +38,7 @@
  */
 
 /* still a TODO to be able to configure the fmt string via argv */
-#define FMT_STRING "%a (%u): %s"
+#define FMT_STRING "%s; %B"
 
 extern char *str_urgency(enum Urgency u) {
     switch (u) {
@@ -55,6 +56,16 @@ extern void print_note(Note *n) {
     char *c;
     char pct = 0;
 
+    char *body = (n->body == NULL ? "" : strdup(n->body));
+    if (body == NULL) {
+	perror("could not allocate");
+	return;
+    }
+
+    char *bp;
+    for (bp = body; *bp != '\0'; ++bp)
+	if (*bp == '\n') *bp = ' ';
+
     for (c = FMT_STRING; *c; c++) {
 	if (pct) {
 	    switch (*c) {
@@ -68,7 +79,7 @@ extern void print_note(Note *n) {
 		printf("%s", (n->summary == NULL ? "" : n->summary));
 		break;
 	    case 'B':
-		printf("%s", (n->body == NULL ? "" : n->body));
+		printf("%s", body);
 		break;
 	    case 'e':
 		printf("%d", n->timeout);
@@ -83,13 +94,11 @@ extern void print_note(Note *n) {
 		printf("%%%c", *c);
 	    }
 	    pct = 0;
-	    continue;
-	}
-	if (*c == '%') {
+	} else if (*c == '%') {
 	    pct = 1;
-	    continue;
+	} else {
+	    printf("%c", *c);
 	}
-	printf("%c", *c);
     }
     printf((pct ? "%%\n" : "\n"));
     fflush(stdout);
