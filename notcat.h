@@ -113,7 +113,13 @@ extern void free_note(Note *);
 
 /* fmt.c */
 
+extern char *fmt_string;
+
 extern char *str_urgency(enum Urgency);
 extern void print_note(Note *);
+
+/* dbus.c */
+
+extern void run(void);
 
 #endif

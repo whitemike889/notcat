@@ -37,8 +37,7 @@
  * urgency	    %u
  */
 
-/* still a TODO to be able to configure the fmt string via argv */
-#define FMT_STRING "%s; %B"
+char *fmt_string = "%s";
 
 extern char *str_urgency(enum Urgency u) {
     switch (u) {
@@ -66,7 +65,7 @@ extern void print_note(Note *n) {
     for (bp = body; *bp != '\0'; ++bp)
 	if (*bp == '\n') *bp = ' ';
 
-    for (c = FMT_STRING; *c; c++) {
+    for (c = fmt_string; *c; c++) {
 	if (pct) {
 	    switch (*c) {
 	    case 'i':

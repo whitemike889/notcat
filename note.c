@@ -27,7 +27,7 @@ extern Note *new_note(int id, char *appname, char *summary, char *body,
 		      Actions *actions,
 #endif
 		      int timeout, enum Urgency urgency) {
-    Note *n = malloc(sizeof(Note));
+    Note *n = g_malloc(sizeof(Note));
 
     /* TODO: what if this note is replacing another? */
     n->id = id;
@@ -48,6 +48,7 @@ extern Note *new_note(int id, char *appname, char *summary, char *body,
 #if ACTIONS
 extern void free_actions(Actions *a) {
     if (!a) return;
+
     g_strfreev(a->actions);
     g_free(a);
 }
@@ -56,13 +57,13 @@ extern void free_actions(Actions *a) {
 extern void free_note(Note *n) {
     if (!n) return;
 
-    free(n->appname);
-    free(n->summary);
-    free(n->body);
+    g_free(n->appname);
+    g_free(n->summary);
+    g_free(n->body);
 
 #if ACTIONS
     free_actions(n->actions);
 #endif
 
-    free(n);
+    g_free(n);
 }

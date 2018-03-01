@@ -4,9 +4,9 @@ It's for when you just want something to print what desktop notifications have
 been sent to it.  Much like statnot, but even simpler (and significantly more
 performant).
 
-Depends on gio/gobject/glib for its dbus implementation; the intent is to
-shrink these dependencies as much as possible to make it simple to swap them
-out if desired.
+Depends on gio/gobject/glib for its dbus implementation and main loop; the
+intent is to shrink these dependencies as much as possible to make it simple
+to swap them out if desired.
 
 DISCLAIMER: notcat is in early stages, and as of now, doesn't even fully
 implement the desktop notification API.  In particular, it doesn't (really)
@@ -18,9 +18,8 @@ latter will actually look like is still rather up in the air).
 ## Formatting
 
 notcat is configurable via a format string (much like the standard `date`
-command).  This string is currently not configurable via argv (this is a TODO),
-but rather by redefining `FMT_STRING` in `fmt.c`.  Supported format sequences
-are:
+command).  It takes a single (optional) argument -- a format string.  Supported
+format sequences are:
 
 ```
 %i  id
