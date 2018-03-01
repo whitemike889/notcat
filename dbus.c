@@ -117,6 +117,7 @@ static void notify(GDBusConnection *conn, const gchar *sender,
     unsigned int replaces_id = 0;
     char *summary = NULL;
     char *body = NULL;
+    char *format = NULL;
 #if ACTIONS
     Actions *actions = g_malloc0(sizeof(Actions));
 #endif
@@ -161,7 +162,13 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                         urgency = g_variant_get_byte(dict_value);
                         g_variant_unref(dict_value);
                     }
-                    // TODO: custom formats
+                    dict_value = g_variant_lookup_value(content, "format",
+                                                        G_VARIANT_TYPE_STRING);
+                    if (dict_value) {
+                        format = g_variant_dup_string(dict_value, NULL);
+                        g_variant_unref(dict_value);
+                    }
+
                     // TODO: category (?)
                     // TODO: support tying arbitrary hints to notifications
                 }
@@ -192,7 +199,7 @@ static void notify(GDBusConnection *conn, const gchar *sender,
 #if ACTIONS
                           actions,
 #endif
-                          timeout, urgency);
+                          timeout, urgency, format);
     print_note(note);
     free_note(note);
 
@@ -308,13 +315,13 @@ extern void run(void) {
                                                       NULL);
 
     owner_id = g_bus_own_name(G_BUS_TYPE_SESSION,
-            FDN_NAME,
-            G_BUS_NAME_OWNER_FLAGS_NONE,
-            on_bus_acquired,
-            on_name_acquired,
-            on_name_lost,
-            NULL,
-            NULL);
+                              FDN_NAME,
+                              G_BUS_NAME_OWNER_FLAGS_NONE,
+                              on_bus_acquired,
+                              on_name_acquired,
+                              on_name_lost,
+                              NULL,
+                              NULL);
 
     loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);

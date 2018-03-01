@@ -86,7 +86,7 @@ typedef struct {
     /* char *dbus_client; */
 
     /* hints */
-    /* char *format; * custom format for just this notification */
+    char *format; /* custom format for just this notification */
     enum Urgency urgency;
 } Note;
 
@@ -95,15 +95,17 @@ typedef struct {
  */
 
 /* note.c */
-extern Note *new_note(int,	      /* id */
-		      char *,	      /* app name */
-		      char *,         /* summary */
-		      char *,         /* body */
+extern Note *new_note(int,          /* id */
+                      char *,       /* app name */
+                      char *,       /* summary */
+                      char *,       /* body */
 #if ACTIONS
-		      Actions *,      /* actions */
+                      Actions *,    /* actions */
 #endif
-		      int,	      /* timeout */
-		      enum Urgency);  /* urgency */
+                      int,          /* timeout */
+                      enum Urgency, /* urgency */
+                      char *format  /* format (optional) */
+                     );
 
 #if ACTIONS
 extern void free_actions(Actions *);

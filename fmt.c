@@ -26,78 +26,80 @@
 /*
  * Proposed format syntax (incomplete)
  *
- * id		    %i
- * app_name	    %a
- * summary	    %s
- * body		    %B		- also %(B:30) for 'first 30 chars of b'?
- * actions	    ???		- TODO - %(A:key)?
+ * id               %i
+ * app_name         %a
+ * summary          %s
+ * body             %B          - also %(B:30) for 'first 30 chars of b'?
+ * actions          ???         - TODO - %(A:key)?
  * arbitrary hints  %(H:key) ?  - TODO
- * category	    %c		- TODO?
+ * category         %c          - TODO?
  * expire_timeout   %e
- * urgency	    %u
+ * urgency          %u
  */
 
 char *fmt_string = "%s";
 
 extern char *str_urgency(enum Urgency u) {
     switch (u) {
-	case URG_NONE: return "NONE";
-	case URG_LOW:  return "LOW";
-	case URG_NORM: return "NORMAL";
-	case URG_CRIT: return "CRITICAL";
-	default:       return "IDFK";
+        case URG_NONE: return "NONE";
+        case URG_LOW:  return "LOW";
+        case URG_NORM: return "NORMAL";
+        case URG_CRIT: return "CRITICAL";
+        default:       return "IDFK";
     }
 }
 
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
-/* TODO: UTF-8 the format string! */
+/* TODO: make sure we're unicode-friendly here */
 extern void print_note(Note *n) {
     char *c;
     char pct = 0;
 
     char *body = (n->body == NULL ? "" : strdup(n->body));
     if (body == NULL) {
-	perror("could not allocate");
-	return;
+        perror("could not allocate");
+        return;
     }
 
     char *bp;
     for (bp = body; *bp != '\0'; ++bp)
-	if (*bp == '\n') *bp = ' ';
+        if (*bp == '\n') *bp = ' ';
 
-    for (c = fmt_string; *c; c++) {
-	if (pct) {
-	    switch (*c) {
-	    case 'i':
-		printf("%u", n->id);
-		break;
-	    case 'a':
-		printf("%s", (n->appname == NULL ? "" : n->appname));
-		break;
-	    case 's':
-		printf("%s", (n->summary == NULL ? "" : n->summary));
-		break;
-	    case 'B':
-		printf("%s", body);
-		break;
-	    case 'e':
-		printf("%d", n->timeout);
-		break;
-	    case 'u':
-		printf("%s", str_urgency(n->urgency));
-		break;
-	    case '%':
-		printf("%%");
-		break;
-	    default:
-		printf("%%%c", *c);
-	    }
-	    pct = 0;
-	} else if (*c == '%') {
-	    pct = 1;
-	} else {
-	    printf("%c", *c);
-	}
+    char *fmt = (n->format == NULL ? fmt_string : n->format);
+
+    for (c = fmt; *c; c++) {
+        if (pct) {
+            switch (*c) {
+            case 'i':
+                printf("%u", n->id);
+                break;
+            case 'a':
+                printf("%s", (n->appname == NULL ? "" : n->appname));
+                break;
+            case 's':
+                printf("%s", (n->summary == NULL ? "" : n->summary));
+                break;
+            case 'B':
+                printf("%s", body);
+                break;
+            case 'e':
+                printf("%d", n->timeout);
+                break;
+            case 'u':
+                printf("%s", str_urgency(n->urgency));
+                break;
+            case '%':
+                printf("%%");
+                break;
+            default:
+                printf("%%%c", *c);
+            }
+            pct = 0;
+        } else if (*c == '%') {
+            pct = 1;
+        } else {
+            printf("%c", *c);
+        }
     }
     printf((pct ? "%%\n" : "\n"));
     fflush(stdout);
