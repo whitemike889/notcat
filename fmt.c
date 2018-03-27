@@ -49,6 +49,25 @@ extern char *str_urgency(enum Urgency u) {
     }
 }
 
+static void putuint(uint32_t u) {
+    if (u == 0) {
+        putchar('0');
+        return;
+    }
+
+    char chs[10] = {0, 0, 0, 0, 0};
+    size_t idx;
+    for (idx = 9; u > 0; idx--) {
+        chs[idx] = '0' + (u % 10);
+        u /= 10;
+    }
+
+    for (idx = 0; idx < 10; idx++) {
+        if (chs[idx] != 0)
+            putchar(chs[idx]);
+    }
+}
+
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
 extern void print_note(Note *n) {
@@ -71,28 +90,31 @@ extern void print_note(Note *n) {
         if (pct) {
             switch (*c) {
             case 'i':
-                printf("%u", n->id);
+                putuint(n->id);
                 break;
             case 'a':
-                printf("%s", (n->appname == NULL ? "" : n->appname));
+                fputs((n->appname == NULL ? "" : n->appname), stdout);
                 break;
             case 's':
-                printf("%s", (n->summary == NULL ? "" : n->summary));
+                fputs((n->summary == NULL ? "" : n->summary), stdout);
                 break;
             case 'B':
-                printf("%s", body);
+                fputs(body, stdout);
                 break;
             case 'e':
-                printf("%d", n->timeout);
+                if (n->timeout < 0)
+                    putchar('-');
+                putuint((uint32_t) n->timeout);
                 break;
             case 'u':
-                printf("%s", str_urgency(n->urgency));
+                fputs(str_urgency(n->urgency), stdout);
                 break;
             case '%':
-                printf("%%");
+                putchar('%');
                 break;
             default:
-                printf("%%%c", *c);
+                putchar('%');
+                putchar(*c);
             }
             pct = 0;
         } else if (*c == '%') {
@@ -101,6 +123,10 @@ extern void print_note(Note *n) {
             printf("%c", *c);
         }
     }
-    printf((pct ? "%%\n" : "\n"));
+
+    fputs((pct ? "%%\n" : "\n"), stdout);
     fflush(stdout);
+
+    if (n->body != NULL)
+        free(body);
 }

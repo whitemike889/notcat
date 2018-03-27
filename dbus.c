@@ -39,8 +39,8 @@ static GDBusNodeInfo *introspection_data = NULL;
 
 static const char *introspection_xml =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    "<node name=\""FDN_PATH"\">"
-    "    <interface name=\""FDN_IFAC"\">"
+    "<node name=\"" FDN_PATH "\">"
+    "    <interface name=\"" FDN_IFAC "\">"
 
     "        <method name=\"GetCapabilities\">"
     "            <arg direction=\"out\" name=\"capabilities\"    type=\"as\"/>"
@@ -114,15 +114,15 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                    GVariant *params,
                    GDBusMethodInvocation *invocation) {
     char *appname = NULL;
-    unsigned int replaces_id = 0;
+    uint32_t replaces_id = 0;
     char *summary = NULL;
     char *body = NULL;
     char *format = NULL;
 #if ACTIONS
     Actions *actions = g_malloc0(sizeof(Actions));
 #endif
-    int timeout = -1;
-    int urgency = 1;
+    int32_t timeout = -1;
+    enum Urgency urgency = 1;
 
     {
         GVariantIter *iter = g_variant_iter_new(params);
@@ -185,7 +185,7 @@ static void notify(GDBusConnection *conn, const gchar *sender,
         g_variant_iter_free(iter);
     }
 
-    unsigned int n_id = replaces_id ? replaces_id : ++id;
+    uint32_t n_id = replaces_id ? replaces_id : ++id;
 
 #if ACTIONS
     if (actions->count < 1) {
@@ -234,21 +234,12 @@ static void get_server_information(GDBusConnection *conn, const gchar *sender,
  */
 
 /*
-void signal_notification_closed(GDBusConnection *conn,
-                                const guint not_id, const guint reason) {
-    GVariant *body;
-    GError *err;
+void signal_notification_closed() {
+    TODO
+}
 
-    body = g_variant_new("(uu)", not_id, reason);
-    err = NULL;
-
-    g_dbus_connection_emit_signal(conn, dbus_client,
-                                  FDN_PATH, FDN_IFAC, "NotificationClosed",
-                                  body, &err);
-    if (err) {
-        g_printerr("Could not close notification: %s\n", err->message);
-        g_error_free(err);
-    }
+void signal_action_invoked() {
+    TODO
 }
 */
 

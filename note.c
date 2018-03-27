@@ -22,11 +22,11 @@
 
 #include "notcat.h"
 
-extern Note *new_note(int id, char *appname, char *summary, char *body,
+extern Note *new_note(uint32_t id, char *appname, char *summary, char *body,
 #if ACTIONS
                       Actions *actions,
 #endif
-                      int timeout, enum Urgency urgency, char *format) {
+                      int32_t timeout, enum Urgency urgency, char *format) {
     Note *n = g_malloc(sizeof(Note));
 
     /* TODO: what if this note is replacing another? */

@@ -36,6 +36,8 @@
 
 #define VERSION 0.1
 
+#include <stdint.h>
+
 // by default, say we support actions :)
 #ifndef ACTIONS
 #define ACTIONS 1
@@ -74,7 +76,7 @@ enum CloseReason {
 };
 
 typedef struct {
-    int id;
+    unsigned int id;
     char *appname;
     char *summary;
     char *body;
@@ -95,16 +97,16 @@ typedef struct {
  */
 
 /* note.c */
-extern Note *new_note(int,          /* id */
+extern Note *new_note(uint32_t,     /* id */
                       char *,       /* app name */
                       char *,       /* summary */
                       char *,       /* body */
 #if ACTIONS
                       Actions *,    /* actions */
 #endif
-                      int,          /* timeout */
+                      int32_t,      /* timeout */
                       enum Urgency, /* urgency */
-                      char *format  /* format (optional) */
+                      char *        /* format (optional) */
                      );
 
 #if ACTIONS
