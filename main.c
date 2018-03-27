@@ -22,6 +22,16 @@
 
 #include "notcat.h"
 
+/**
+ * TODO: args for:
+ *  - onnotify
+ *  - onclose
+ *  - hreffmt
+ *  - markupfmt
+ *
+ * These should all be behind #DEFINEs when implemented.
+ */
+
 void run_options(int argc, char **argv) {
     if (argc == 2)
         fmt_string = argv[1];
