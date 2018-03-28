@@ -32,9 +32,9 @@
  * These should all be behind #DEFINEs when implemented.
  */
 
-void run_options(int argc, char **argv) {
+void getopt(int argc, char **argv) {
     if (argc == 2)
-        fmt_string = argv[1];
+        fmt_string_opt = argv[1];
     else if (argc > 1) {
         fprintf(stderr, "usage: %s [fmtstring]\n", argv[0]);
         exit(2);
@@ -42,7 +42,8 @@ void run_options(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    run_options(argc, argv);
-    run();
+    getopt(argc, argv);
+
+    run_dbus(print_note);
     return 0;
 }

@@ -27,7 +27,7 @@
 #include <gio/gio.h>
 #include <stdio.h>
 
-#include "notcat.h"
+#include "notlib.h"
 
 /*
  * dbussy data type pseudo-boilerplate.  The introspection_xml parsing might
@@ -109,6 +109,7 @@ static void get_capabilities(GDBusConnection *conn, const gchar *sender,
 }
 
 static unsigned int id = 0;
+static void (*on_notify_callback)(const Note *);
 
 static void notify(GDBusConnection *conn, const gchar *sender,
                    GVariant *params,
@@ -200,7 +201,7 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                           actions,
 #endif
                           timeout, urgency, format);
-    print_note(note);
+    on_notify_callback(note);
     free_note(note);
 
     GVariant *reply = g_variant_new("(u)", n_id);
@@ -298,7 +299,7 @@ static void on_name_lost(GDBusConnection *conn, const gchar *name,
     // g_printerr("Lost name %s on the session bus\n", name);
 }
 
-extern void run(void) {
+extern void run_dbus(void (*on_notify)(const Note *)) {
     GMainLoop *loop;
     guint owner_id;
 
@@ -313,6 +314,8 @@ extern void run(void) {
                               on_name_lost,
                               NULL,
                               NULL);
+
+    on_notify_callback = on_notify;
 
     loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);

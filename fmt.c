@@ -37,9 +37,9 @@
  * urgency          %u
  */
 
-char *fmt_string = "%s";
+char *fmt_string_opt = "%s";
 
-extern char *str_urgency(enum Urgency u) {
+extern char *str_urgency(const enum Urgency u) {
     switch (u) {
         case URG_NONE: return "NONE";
         case URG_LOW:  return "LOW";
@@ -68,7 +68,7 @@ static void putuint(uint32_t u) {
     }
 }
 
-static void fmt_body(char *in, char *out) {
+static void fmt_body(const char *in, char *out) {
     size_t i;
     char c;
     for (i = 0; (c = in[i]); ++i) {
@@ -85,7 +85,7 @@ static void fmt_body(char *in, char *out) {
 
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
-extern void print_note(Note *n) {
+extern void print_note(const Note *n) {
     char *c;
     char pct = 0;
 
@@ -97,7 +97,7 @@ extern void print_note(Note *n) {
 
     fmt_body(n->body, body);
 
-    char *fmt = (n->format == NULL ? fmt_string : n->format);
+    char *fmt = (n->format == NULL ? fmt_string_opt : n->format);
 
     for (c = fmt; *c; c++) {
         if (pct) {

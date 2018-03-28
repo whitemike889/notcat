@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#include "notcat.h"
+#include "notlib.h"
 
 extern Note *new_note(uint32_t id, char *appname, char *summary, char *body,
 #if ACTIONS
