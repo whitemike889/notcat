@@ -68,21 +68,34 @@ static void putuint(uint32_t u) {
     }
 }
 
+static void fmt_body(char *in, char *out) {
+    size_t i;
+    char c;
+    for (i = 0; (c = in[i]); ++i) {
+        switch (c) {
+        case '\n':
+            out[i] = ' ';
+            break;
+        default:
+            out[i] = c;
+        }
+    }
+    out[i] = '\0';
+}
+
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
 extern void print_note(Note *n) {
     char *c;
     char pct = 0;
 
-    char *body = (n->body == NULL ? "" : strdup(n->body));
+    char *body = (n->body == NULL ? "" : malloc(strlen(n->body)));
     if (body == NULL) {
         perror("could not allocate");
         return;
     }
 
-    char *bp;
-    for (bp = body; *bp != '\0'; ++bp)
-        if (*bp == '\n') *bp = ' ';
+    fmt_body(n->body, body);
 
     char *fmt = (n->format == NULL ? fmt_string : n->format);
 
@@ -102,9 +115,12 @@ extern void print_note(Note *n) {
                 fputs(body, stdout);
                 break;
             case 'e':
-                if (n->timeout < 0)
+                if (n->timeout < 0) {
                     putchar('-');
-                putuint((uint32_t) n->timeout);
+                    putuint(UINT32_MAX - (uint32_t) n->timeout + 1);
+                } else {
+                    putuint(n->timeout);
+                }
                 break;
             case 'u':
                 fputs(str_urgency(n->urgency), stdout);
