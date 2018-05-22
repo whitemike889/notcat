@@ -78,6 +78,14 @@ typedef struct {
     enum Urgency urgency;
 } Note;
 
+typedef struct {
+    void (*notify)  (const Note *);
+    void (*close)   (const Note *);
+    void (*replace) (const Note *);
+} NoteCallbacks;
+
+extern NoteCallbacks callbacks;
+
 /*
  * functions
  */
@@ -99,10 +107,15 @@ extern Note *new_note(uint32_t,     /* id */
 extern void free_actions(Actions *);
 #endif
 
+extern int32_t note_timeout(const Note *);
 extern void free_note(Note *);
+
+/* queue.c */
+
+extern void enqueue_note(Note *);
 
 /* dbus.c */
 
-extern void run_dbus(void (*on_notify)(const Note *));
+extern void notlib_run(NoteCallbacks);
 
 #endif

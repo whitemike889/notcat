@@ -79,7 +79,7 @@ static const char *introspection_xml =
     "            <arg name=\"action_key\" type=\"s\"/>"
     "        </signal>"
     "   </interface>"
-"</node>";
+    "</node>";
 
 /*
  * Per-method-call logic.  Obviously, the most interesting is notify().
@@ -97,9 +97,9 @@ static void get_capabilities(GDBusConnection *conn, const gchar *sender,
 #endif
     g_variant_builder_add(builder, "s", "body");
     /*
-     * g_variant_builder_add(builder, "s", "body-hyperlinks");
-     * g_variant_builder_add(builder, "s", "body-markup");
-     */
+    g_variant_builder_add(builder, "s", "body-hyperlinks");
+    g_variant_builder_add(builder, "s", "body-markup");
+    */
 
     value = g_variant_new("(as)", builder);
     g_variant_builder_unref(builder);
@@ -109,7 +109,7 @@ static void get_capabilities(GDBusConnection *conn, const gchar *sender,
 }
 
 static unsigned int id = 0;
-static void (*on_notify_callback)(const Note *);
+NoteCallbacks callbacks;
 
 static void notify(GDBusConnection *conn, const gchar *sender,
                    GVariant *params,
@@ -186,7 +186,12 @@ static void notify(GDBusConnection *conn, const gchar *sender,
         g_variant_iter_free(iter);
     }
 
-    uint32_t n_id = replaces_id ? replaces_id : ++id;
+    uint32_t n_id = replaces_id;
+    if (n_id == 0) {
+        ++id;
+        if (id == 0) n_id = ++id;
+        else n_id = id;
+    }
 
 #if ACTIONS
     if (actions->count < 1) {
@@ -201,8 +206,8 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                           actions,
 #endif
                           timeout, urgency, format);
-    on_notify_callback(note);
-    free_note(note);
+    callbacks.notify(note);
+    enqueue_note(note);
 
     GVariant *reply = g_variant_new("(u)", n_id);
     g_dbus_method_invocation_return_value(invocation, reply);
@@ -291,15 +296,15 @@ static void on_bus_acquired(GDBusConnection *conn, const gchar *name,
 
 static void on_name_acquired(GDBusConnection *conn, const gchar *name,
                              gpointer user_data) {
-    // g_printerr("Got name %s on the session bus\n", name);
+    g_printerr("Got name %s on the session bus\n", name);
 }
 
 static void on_name_lost(GDBusConnection *conn, const gchar *name,
                          gpointer user_data) {
-    // g_printerr("Lost name %s on the session bus\n", name);
+    g_printerr("Lost name %s on the session bus\n", name);
 }
 
-extern void run_dbus(void (*on_notify)(const Note *)) {
+extern void notlib_run(NoteCallbacks cbs) {
     GMainLoop *loop;
     guint owner_id;
 
@@ -315,7 +320,7 @@ extern void run_dbus(void (*on_notify)(const Note *)) {
                               NULL,
                               NULL);
 
-    on_notify_callback = on_notify;
+    callbacks = cbs;
 
     loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);

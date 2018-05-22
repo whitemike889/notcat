@@ -41,9 +41,23 @@ void getopt(int argc, char **argv) {
     }
 }
 
+static uint32_t rc = 0;
+
+void inc(const Note *n) {
+    ++rc;
+    print_note(n);
+}
+
+void dec(const Note *n) {
+    if (--rc == 0)
+        printf("\n");
+}
+
 int main(int argc, char **argv) {
+    NoteCallbacks cbs = { .notify = inc, .close = dec };
+
     getopt(argc, argv);
 
-    run_dbus(print_note);
+    notlib_run(cbs);
     return 0;
 }

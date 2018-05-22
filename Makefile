@@ -1,5 +1,5 @@
 CC = gcc
-CFILES = notlib/dbus.c notlib/note.c main.c fmt.c
+CFILES = notlib/dbus.c notlib/note.c notlib/queue.c main.c fmt.c
 CFLAGS = -Wall -Werror -pthread -O2
 LIBS = -lgio-2.0 -lgobject-2.0 -lglib-2.0
 INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include
@@ -11,4 +11,4 @@ default: ${MAIN_SRCS}
 clean:
 	rm -f notcat
 
-notlib.o: notlib/dbus.c notlib/note.c notlib/notlib.h
+notlib.o: notlib/dbus.c notlib/note.c notlib/queue.c notlib/notlib.h

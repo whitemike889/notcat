@@ -46,6 +46,14 @@ extern Note *new_note(uint32_t id, char *appname, char *summary, char *body,
     return n;
 }
 
+// FIXME: do something smarter
+extern int32_t note_timeout(const Note *n) {
+    if (n->timeout > 0)
+        return n->timeout;
+
+    return 5;
+}
+
 #if ACTIONS
 extern void free_actions(Actions *a) {
     if (!a) return;
