@@ -3,22 +3,19 @@
 It's for when you just want something to print what desktop notifications have
 been sent to it.  Much like statnot, but even simpler (and significantly zippier).
 
-Depends on gio/gobject/glib (in particular, the `dbus-glib` package on arch
-linux, or equivalents in other environments) for its dbus implementation and main
-loop; the intent is to keep these dependencies as small as possible to make it
-simple to swap them out if desired.
+Notlib depends on gio/gobject/glib (in particular, the `dbus-glib` package on
+arch linux, or equivalents in other environments) for its dbus implementation and
+main loop; the intent is to keep these dependencies as small as possible to make
+it simple to swap them out if desired.
 
 DISCLAIMER: notcat is in early stages, and as of now, doesn't even fully
-implement the desktop notification API.  In particular, it doesn't (really)
-understand what replacement IDs are, and it has no concept of a notification
-closing (as far as it knows, a notification is a point-in-time kind of thing).
-It is also missing signals, as well as any notion of actions (though what the
-latter will actually look like is still rather up in the air).
+implement the desktop notification API.  In particular, it has no concept of a
+replacement notification, and signals are unimplemented.
 
 ## Formatting
 
 Notcat is configurable via a format string (much like the standard `date`
-command).  It takes a single (optional) argument -- a format string.  Supported
+command).  It takes a single (optional) argument -- the format.  Supported
 format sequences are:
 
 ```
@@ -29,6 +26,8 @@ format sequences are:
 %e  expiration timeout
 %u  urgency
 ```
+
+The string `%%` produces a single `%`.
 
 Planned future sequences are:
 
@@ -59,3 +58,41 @@ default to nothing at all.  This matches notcat's current behavior.
 
 Details regarding splitting and quoting the arguments to spawned processes are
 yet to be designed.
+
+## notlib
+
+Notcat is built on top of the notlib library, which handles the ownership and
+management of notifications.  Notlib is intended to be used directly in cases
+where the `--onnotify` flag and friends are insufficient.
+
+The notlib API is extremely simple.  There is a single struct,
+
+```c
+typedef struct {
+    void (*notify)  (const Note *);
+    void (*close)   (const Note *);
+    void (*replace) (const Note *);
+} NoteCallbacks;
+```
+
+Users of notlib build this struct of callback functions, and pass it as the
+single argument to `notlib_run()`, which runs for the duration of the program.
+Notlib owns the lifetime of the `Note *`s; to free or modify them is an error.
+
+The thread-safety of notlib is as of yet undefined.
+
+## TODO, fixes, roadmap
+
+ - finish notlib
+    - note replacement
+    - thread safety guarantee
+    - what if callbacks take a long time?
+    - generality -- remove all notcat-specific references
+    - resolve all `TODO`s and `FIXME`s
+    - signals support
+    - manual closing support
+    - actions support
+ - improve notlib/notcat makefile/header separation
+ - more format sequences
+ - markup "support", as far as it will go
+ - `--onnotify` and `--onclose` (`--onreplace`?)
