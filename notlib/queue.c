@@ -63,8 +63,7 @@ static void dequeue_note(qnode *qn) {
 static gboolean wakeup_queue(gpointer p) {
     gint64 curr_time = (g_get_monotonic_time() / 1000);
 
-    qnode *qn;
-    qnode *qnext;
+    qnode *qn, *qnext;
     for (qn = note_queue_start; qn; qn = qnext) {
         qnext = qn->next;
         if (qn->exp <= curr_time)
@@ -74,16 +73,40 @@ static gboolean wakeup_queue(gpointer p) {
     return FALSE;
 }
 
+static void setup_qnode(qnode *qn, Note *n) {
+    qn->n = n;
+
+    int32_t timeout_millis = note_timeout(n) * 1000;
+    qn->exp = (g_get_monotonic_time() / 1000) + timeout_millis;
+    g_timeout_add(timeout_millis, wakeup_queue, NULL);
+}
+
+// Tries to find a note to replace with this new one.
+// Returns true iff it found a note to replace.
+static int replace_note(Note *n) {
+    qnode *qn;
+    for (qn = note_queue_start; qn; qn = qn->next) {
+        if (qn->n->id == n->id) {
+            free_note(qn->n);
+            if (callbacks.replace != NULL)
+                callbacks.replace(n);
+            setup_qnode(qn, n);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 // Add a note to the queue, and set a new timeout
 extern void enqueue_note(Note *n) {
     qnode *new_qn = malloc(sizeof(qnode));
     // literally DO we care about running out of memory?
     new_qn->n = n;
 
-    int32_t timeout_millis = note_timeout(n) * 1000;
-    new_qn->exp = (g_get_monotonic_time() / 1000) + timeout_millis;
-    new_qn->next = NULL;
+    if (n->id && replace_note(n))
+        return;
 
+    new_qn->next = NULL;
     if (note_queue_start == NULL) {
         note_queue_start = new_qn;
         new_qn->prev = NULL;
@@ -94,5 +117,6 @@ extern void enqueue_note(Note *n) {
         note_queue_end = new_qn;
     }
 
-    g_timeout_add(timeout_millis, wakeup_queue, NULL);
+    callbacks.notify(n);
+    setup_qnode(new_qn, n);
 }

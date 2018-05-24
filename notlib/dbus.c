@@ -206,7 +206,6 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                           actions,
 #endif
                           timeout, urgency, format);
-    callbacks.notify(note);
     enqueue_note(note);
 
     GVariant *reply = g_variant_new("(u)", n_id);

@@ -43,7 +43,7 @@ void getopt(int argc, char **argv) {
 
 static uint32_t rc = 0;
 
-void inc(const Note *n) {
+void inc_print(const Note *n) {
     ++rc;
     print_note(n);
 }
@@ -54,7 +54,7 @@ void dec(const Note *n) {
 }
 
 int main(int argc, char **argv) {
-    NoteCallbacks cbs = { .notify = inc, .close = dec };
+    NoteCallbacks cbs = { .notify = inc_print, .close = dec, .replace = print_note };
 
     getopt(argc, argv);
 
