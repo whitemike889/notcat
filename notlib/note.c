@@ -29,7 +29,6 @@ extern Note *new_note(uint32_t id, char *appname, char *summary, char *body,
                       int32_t timeout, enum Urgency urgency, char *format) {
     Note *n = g_malloc(sizeof(Note));
 
-    /* TODO: what if this note is replacing another? */
     n->id = id;
     n->appname = appname;
     n->summary = summary;

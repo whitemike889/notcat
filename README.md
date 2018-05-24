@@ -84,13 +84,12 @@ The thread-safety of notlib is as of yet undefined.
 ## TODO, fixes, roadmap
 
  - finish notlib
-    - note replacement
-    - thread safety guarantee
-    - what if callbacks take a long time?
+    - correct "replaces ID of nonexistent note" behavior
+    - thread safety/correctness
+        - what if callbacks take a long time?
     - generality -- remove all notcat-specific references
     - resolve all `TODO`s and `FIXME`s
     - signals support
-    - manual closing support
     - actions support
  - improve notlib/notcat makefile/header separation
  - more format sequences
