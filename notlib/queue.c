@@ -39,16 +39,6 @@ typedef struct qn {
 static qnode *note_queue_start = NULL;
 static qnode *note_queue_end = NULL;
 
-extern void dequeue_note_by_id(uint32_t id) {
-    qnode *qn;
-    for (qn = note_queue_start; qn; qn = qn->next) {
-        if (qn->id == id) {
-            dequeue_note(qn);
-            return;
-        }
-    }
-}
-
 static void dequeue_note(qnode *qn) {
     if (qn->prev != NULL) {
         qn->prev->next = qn->next;
@@ -69,6 +59,16 @@ static void dequeue_note(qnode *qn) {
     free(qn);
 }
 
+extern void dequeue_note_by_id(uint32_t id) {
+    qnode *qn;
+    for (qn = note_queue_start; qn; qn = qn->next) {
+        if (qn->n->id == id) {
+            dequeue_note(qn);
+            return;
+        }
+    }
+}
+
 // Wake up and scan the queue for things to do!
 static gboolean wakeup_queue(gpointer p) {
     gint64 curr_time = (g_get_monotonic_time() / 1000);
@@ -76,7 +76,7 @@ static gboolean wakeup_queue(gpointer p) {
     qnode *qn, *qnext;
     for (qn = note_queue_start; qn; qn = qnext) {
         qnext = qn->next;
-        if (qn->exp <= curr_time)
+        if (qn->exp && qn->exp <= curr_time)
             dequeue_note(qn);
     }
 
@@ -86,7 +86,12 @@ static gboolean wakeup_queue(gpointer p) {
 static void setup_qnode(qnode *qn, Note *n) {
     qn->n = n;
 
-    int32_t timeout_millis = note_timeout(n) * 1000;
+    int32_t timeout_millis = note_timeout(n);
+    if (!timeout_millis) {
+        qn->exp = 0;
+        return;
+    }
+
     qn->exp = (g_get_monotonic_time() / 1000) + timeout_millis;
     g_timeout_add(timeout_millis, wakeup_queue, NULL);
 }

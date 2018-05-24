@@ -48,7 +48,7 @@ extern Note *new_note(uint32_t id, char *appname, char *summary, char *body,
 
 // FIXME: do something smarter
 extern int32_t note_timeout(const Note *n) {
-    if (n->timeout > 0)
+    if (n->timeout >= 0)
         return n->timeout;
 
     return 5;
