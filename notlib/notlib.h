@@ -113,6 +113,7 @@ extern void free_note(Note *);
 /* queue.c */
 
 extern void enqueue_note(Note *);
+extern void dequeue_note_by_id(uint32_t);
 
 /* dbus.c */
 

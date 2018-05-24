@@ -39,6 +39,16 @@ typedef struct qn {
 static qnode *note_queue_start = NULL;
 static qnode *note_queue_end = NULL;
 
+extern void dequeue_note_by_id(uint32_t id) {
+    qnode *qn;
+    for (qn = note_queue_start; qn; qn = qn->next) {
+        if (qn->id == id) {
+            dequeue_note(qn);
+            return;
+        }
+    }
+}
+
 static void dequeue_note(qnode *qn) {
     if (qn->prev != NULL) {
         qn->prev->next = qn->next;

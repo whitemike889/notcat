@@ -200,7 +200,6 @@ static void notify(GDBusConnection *conn, const gchar *sender,
     }
 #endif
 
-    /* At some point this will be more sophisticated, lol */
     Note *note = new_note(n_id, appname, summary, body,
 #if ACTIONS
                           actions,
@@ -219,7 +218,7 @@ static void close_notification(GDBusConnection *conn, const gchar *sender,
     guint32 id;
     g_variant_get(params, "(u)", &id);
 
-    // TODO: Do the thing that actually "closes" the notification, aha
+    dequeue_note_by_id(id);
 
     g_dbus_method_invocation_return_value(invocation, NULL);
     g_dbus_connection_flush(conn, NULL, NULL, NULL);
