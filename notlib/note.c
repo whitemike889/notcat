@@ -50,7 +50,7 @@ extern int32_t note_timeout(const Note *n) {
     if (n->timeout >= 0)
         return n->timeout;
 
-    return 5;
+    return 5000;
 }
 
 #if ACTIONS
