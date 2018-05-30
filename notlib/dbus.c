@@ -35,6 +35,8 @@
  * horrifyingly.
  */
 
+static GDBusConnection *dbus_conn;
+
 static GDBusNodeInfo *introspection_data = NULL;
 
 static const char *introspection_xml =
@@ -205,7 +207,7 @@ static void notify(GDBusConnection *conn, const gchar *sender,
                           actions,
 #endif
                           timeout, urgency, format);
-    enqueue_note(note);
+    enqueue_note(note, g_strdup(sender));
 
     GVariant *reply = g_variant_new("(u)", n_id);
     g_dbus_method_invocation_return_value(invocation, reply);
@@ -218,7 +220,7 @@ static void close_notification(GDBusConnection *conn, const gchar *sender,
     guint32 id;
     g_variant_get(params, "(u)", &id);
 
-    dequeue_note_by_id(id);
+    dequeue_note_by_id(id, CLOSE_REASON_CLOSED);
 
     g_dbus_method_invocation_return_value(invocation, NULL);
     g_dbus_connection_flush(conn, NULL, NULL, NULL);
@@ -237,15 +239,31 @@ static void get_server_information(GDBusConnection *conn, const gchar *sender,
  * Signals.  We may send these for Reasons.
  */
 
-/*
-void signal_notification_closed() {
-    TODO
+void signal_notification_closed(Note *n, const gchar *client, enum CloseReason reason) {
+    if (reason < CLOSE_REASON_MIN || reason > CLOSE_REASON_MAX)
+        reason = CLOSE_REASON_IDK;
+
+    GVariant *body = g_variant_new("(uu)", n->id, reason);
+    GError *err = NULL;
+    g_dbus_connection_emit_signal(dbus_conn, client, FDN_PATH, FDN_IFAC,
+            "NotificationClosed", body, &err);
+
+    // TODO: handle the error
+    if (err != NULL)
+        g_error_free(err);
 }
 
-void signal_action_invoked() {
-    TODO
+void signal_action_invoked(Note *n, const gchar *client, const char *ident) {
+    GVariant *body = g_variant_new("(us)", n->id, ident);
+    GError *err = NULL;
+
+    g_dbus_connection_emit_signal(dbus_conn, client, FDN_PATH, FDN_IFAC,
+            "ActionInvoked", body, &err);
+
+    // TODO: handle the error
+    if (err != NULL)
+        g_error_free(err);
 }
-*/
 
 /*
  * Scaffolding functions.  These put things together properly.
@@ -295,6 +313,7 @@ static void on_bus_acquired(GDBusConnection *conn, const gchar *name,
 static void on_name_acquired(GDBusConnection *conn, const gchar *name,
                              gpointer user_data) {
     g_printerr("Got name %s on the session bus\n", name);
+    dbus_conn = conn;
 }
 
 static void on_name_lost(GDBusConnection *conn, const gchar *name,

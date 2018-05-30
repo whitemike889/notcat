@@ -23,6 +23,8 @@
 #define VERSION 0.1
 
 #include <stdint.h>
+#include <glib.h>
+#include <gio/gio.h>
 
 // by default, say we support actions :)
 #ifndef ACTIONS
@@ -55,10 +57,12 @@ enum Urgency {
 
 /* a bit premature, but for the NotificationClosed signal */
 enum CloseReason {
+    CLOSE_REASON_MIN = 1,
     CLOSE_REASON_EXPIRED = 1,
     CLOSE_REASON_DISMISSED = 2,
     CLOSE_REASON_CLOSED = 3,
-    CLOSE_REASON_IDK = 4
+    CLOSE_REASON_IDK = 4,
+    CLOSE_REASON_MAX = 4
 };
 
 typedef struct {
@@ -112,11 +116,13 @@ extern void free_note(Note *);
 
 /* queue.c */
 
-extern void enqueue_note(Note *);
-extern void dequeue_note_by_id(uint32_t);
+extern void enqueue_note(Note *, gchar *sender);
+extern void dequeue_note_by_id(uint32_t, enum CloseReason);
 
 /* dbus.c */
 
 extern void notlib_run(NoteCallbacks);
+extern void signal_notification_closed(Note *, const gchar *, enum CloseReason);
+extern void signal_action_invoked(Note *, const gchar *, const char *);
 
 #endif

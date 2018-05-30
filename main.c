@@ -32,7 +32,7 @@
  * These should all be behind #DEFINEs when implemented.
  */
 
-void getopt(int argc, char **argv) {
+void notcat_getopt(int argc, char **argv) {
     if (argc == 2)
         fmt_string_opt = argv[1];
     else if (argc > 1) {
@@ -56,7 +56,7 @@ void dec(const Note *n) {
 int main(int argc, char **argv) {
     NoteCallbacks cbs = { .notify = inc_print, .close = dec, .replace = print_note };
 
-    getopt(argc, argv);
+    notcat_getopt(argc, argv);
 
     notlib_run(cbs);
     return 0;
