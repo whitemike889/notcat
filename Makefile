@@ -21,6 +21,7 @@ install		: notcat
 	cp notcat /usr/local/bin
 
 clean		:
+	$(MAKE) clean -C notlib
 	rm *.o notcat
 
 fmt.o	: fmt.c notcat.h notlib/notlib.h
