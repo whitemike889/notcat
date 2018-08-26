@@ -17,9 +17,11 @@
  * along with notcat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
 
+#include "notlib/notlib.h"
 #include "notcat.h"
 
 /**
@@ -28,14 +30,12 @@
  *  - onclose
  *  - hreffmt
  *  - markupfmt
- *
- * These should all be behind #DEFINEs when implemented.
  */
 
 void notcat_getopt(int argc, char **argv) {
-    if (argc == 2)
+    if (argc == 2) {
         fmt_string_opt = argv[1];
-    else if (argc > 1) {
+    } else if (argc > 1) {
         fprintf(stderr, "usage: %s [fmtstring]\n", argv[0]);
         exit(2);
     }
@@ -54,10 +54,19 @@ void dec(const Note *n) {
 }
 
 int main(int argc, char **argv) {
-    NoteCallbacks cbs = { .notify = inc_print, .close = dec, .replace = print_note };
-
     notcat_getopt(argc, argv);
 
-    notlib_run(cbs);
+    NoteCallbacks cbs = {
+        .notify = inc_print,
+        .close = dec,
+        .replace = print_note
+    };
+    ServerInfo info = {
+        .app_name = "notcat",
+        .author = "jpco",
+        .version = "0.2"
+    };
+
+    notlib_run(cbs, &info);
     return 0;
 }

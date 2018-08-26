@@ -1,14 +1,27 @@
 CC = gcc
-CFILES = notlib/dbus.c notlib/note.c notlib/queue.c main.c fmt.c
-CFLAGS = -Wall -Werror -pthread -O2
-DEPS = gio-2.0 gobject-2.0 glib-2.0
-LIBS = $(shell pkg-config --libs ${DEPS})
+
+CSRC = fmt.c main.c
+HSRC = notcat.h
+OBJS = fmt.o main.o
+
+CFLAGS = -Wall -Werror -O2
+
+DEPS     = gio-2.0 gobject-2.0 glib-2.0
+LIBS     = $(shell pkg-config --libs ${DEPS})
 INCLUDES = $(shell pkg-config --cflags ${DEPS})
 
-default: ${MAIN_SRCS}
-	${CC} -o notcat ${LIBS} ${CFILES} ${DEFINES} ${CFLAGS} ${INCLUDES}
+notcat 		: ${OBJS} libnotlib.a
+	${CC} -o notcat ${DEFINES} ${CFLAGS} ${OBJS} -L./notlib -lnotlib ${LIBS} ${INCLUDES}
 
-clean:
-	rm -f notcat
+libnotlib.a	:
+	$(MAKE) static -C notlib
 
-notlib.o: notlib/dbus.c notlib/note.c notlib/queue.c notlib/notlib.h
+install		: notcat
+	mkdir -p /usr/local/bin
+	cp notcat /usr/local/bin
+
+clean		:
+	rm *.o notcat
+
+fmt.o	: fmt.c notcat.h notlib/notlib.h
+main.o	: main.c notcat.h notlib/notlib.h

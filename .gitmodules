@@ -1,0 +1,3 @@
+[submodule "notlib"]
+	path = notlib
+	url = https://github.com/jpco/notlib

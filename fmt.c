@@ -18,9 +18,11 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "notlib/notlib.h"
 #include "notcat.h"
 
 /*
@@ -97,7 +99,8 @@ extern void print_note(const Note *n) {
 
     fmt_body(n->body, body);
 
-    char *fmt = (n->format == NULL ? fmt_string_opt : n->format);
+    // char *fmt = (n->format == NULL ? fmt_string_opt : n->format);
+    char *fmt = fmt_string_opt;
 
     for (c = fmt; *c; c++) {
         if (pct) {
