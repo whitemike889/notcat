@@ -91,7 +91,7 @@ extern void print_note(const Note *n) {
     char *c;
     char pct = 0;
 
-    char *body = (n->body == NULL ? "" : malloc(strlen(n->body)));
+    char *body = (n->body == NULL ? "" : malloc(1 + strlen(n->body)));
     if (body == NULL) {
         perror("could not allocate");
         return;
