@@ -49,8 +49,10 @@ void inc_print(const Note *n) {
 }
 
 void dec(const Note *n) {
-    if (--rc == 0)
+    if (--rc == 0) {
         printf("\n");
+        fflush(stdout);
+    }
 }
 
 int main(int argc, char **argv) {
