@@ -11,7 +11,7 @@ LIBS     = $(shell pkg-config --libs ${DEPS})
 INCLUDES = $(shell pkg-config --cflags ${DEPS})
 
 notcat 		: ${OBJS} libnotlib.a
-	${CC} -o notcat ${DEFINES} ${CFLAGS} ${OBJS} -L./notlib -lnotlib ${LIBS} ${INCLUDES}
+	${CC} -o notcat ${DEFINES} ${CFLAGS} ${CSRC} -L./notlib -lnotlib ${LIBS} ${INCLUDES}
 
 libnotlib.a	:
 	$(MAKE) static -C notlib
@@ -23,6 +23,3 @@ install		: notcat
 clean		:
 	$(MAKE) clean -C notlib
 	rm *.o notcat
-
-fmt.o	: fmt.c notcat.h notlib/notlib.h
-main.o	: main.c notcat.h notlib/notlib.h
