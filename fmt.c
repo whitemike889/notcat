@@ -33,7 +33,7 @@
  * summary          %s
  * body             %B          - also %(B:30) for 'first 30 chars of b'?
  * actions          ???         - TODO - %(A:key)?
- * arbitrary hints  %(H:key) ?  - TODO
+ * arbitrary hints  %(H:key) ?
  * category         %c          - TODO?
  * expire_timeout   %e
  * urgency          %u
@@ -70,6 +70,15 @@ static void putuint(uint32_t u) {
     }
 }
 
+static void putint(int32_t i) {
+    if (i < 0) {
+        putchar('-');
+        putuint(UINT32_MAX - (uint32_t) i + 1);
+    } else {
+        putuint(i);
+    }
+}
+
 static void fmt_body(const char *in, char *out) {
     size_t i;
     char c;
@@ -85,11 +94,42 @@ static void fmt_body(const char *in, char *out) {
     out[i] = '\0';
 }
 
+static void print_hint(const Note *n, char *name) {
+    int ih;
+    unsigned char bh;
+    char *sh;
+
+    switch (get_hint_type(n, name)) {
+    case HINT_TYPE_INT:
+        get_int_hint(n, name, &ih);
+        putint(ih);
+        break;
+    case HINT_TYPE_BYTE:
+        get_byte_hint(n, name, &bh);
+        putuint(bh);
+        break;
+    case HINT_TYPE_BOOLEAN:
+        get_boolean_hint(n, name, &ih);
+        fputs((ih ? "TRUE" : "FALSE"), stdout);
+        break;
+    case HINT_TYPE_STRING:
+        get_string_hint(n, name, &sh);
+        fputs(sh, stdout);
+        free(sh);
+        break;
+    }
+}
+
+#define NORMAL      0
+#define PCT         1
+#define PCTPAREN    2
+#define HINT        3
+
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
 extern void print_note(const Note *n) {
     char *c;
-    char pct = 0;
+    char state = NORMAL;
 
     char *body = (n->body == NULL ? "" : malloc(1 + strlen(n->body)));
     if (body == NULL) {
@@ -99,11 +139,44 @@ extern void print_note(const Note *n) {
 
     fmt_body(n->body, body);
 
-    // char *fmt = (n->format == NULL ? fmt_string_opt : n->format);
+    char *fmt_override = NULL;
     char *fmt = fmt_string_opt;
+    if (get_string_hint(n, "format", &fmt_override))
+        fmt = fmt_override;
 
     for (c = fmt; *c; c++) {
-        if (pct) {
+        switch (state) {
+        case HINT: {
+            char *c2;
+            c++;
+            for (c2 = c; *c2 && *c2 != ')'; c2++)
+                ;
+            if (!*c2) {
+                printf("%%(h:%s", c);
+                c = c2 - 1;
+            } else {
+                *c2 = '\0';
+                print_hint(n, c);
+                *c2 = ')';
+                c = c2;
+                state = NORMAL;
+            }
+            break;
+        }
+        case PCTPAREN:
+            switch (*c) {
+            case 'h':
+                if (c[1] == ':') {
+                    state = HINT;
+                    break;
+                }
+            default:
+                printf("%%(%c", *c);
+                state = NORMAL;
+                break;
+            }
+            break;
+        case PCT:
             switch (*c) {
             case 'i':
                 putuint(n->id);
@@ -118,12 +191,7 @@ extern void print_note(const Note *n) {
                 fputs(body, stdout);
                 break;
             case 'e':
-                if (n->timeout < 0) {
-                    putchar('-');
-                    putuint(UINT32_MAX - (uint32_t) n->timeout + 1);
-                } else {
-                    putuint(n->timeout);
-                }
+                putint(n->timeout);
                 break;
             case 'u':
                 fputs(str_urgency(n->urgency), stdout);
@@ -131,20 +199,43 @@ extern void print_note(const Note *n) {
             case '%':
                 putchar('%');
                 break;
+            case '(':
+                state = PCTPAREN;
+                break;
             default:
                 putchar('%');
                 putchar(*c);
             }
-            pct = 0;
-        } else if (*c == '%') {
-            pct = 1;
-        } else {
-            printf("%c", *c);
+            if (state == PCT) {
+                state = NORMAL;
+            }
+            break;
+        case NORMAL:
+            switch (*c) {
+            case '%':
+                state = PCT;
+                break;
+            default:
+                printf("%c", *c);
+            }
+            break;
         }
     }
 
-    fputs((pct ? "%%\n" : "\n"), stdout);
+    switch (state) {
+    case PCT:
+        fputs("%", stdout);
+        break;
+    case PCTPAREN:
+        fputs("%(", stdout);
+        break;
+    }
+
+    fputs("\n", stdout);
     fflush(stdout);
+
+    if (fmt_override != NULL)
+        free(fmt_override);
 
     if (n->body != NULL)
         free(body);
