@@ -117,6 +117,8 @@ static void print_hint(const Note *n, char *name) {
         fputs(sh, stdout);
         free(sh);
         break;
+    default:
+        break;
     }
 }
 
