@@ -20,7 +20,7 @@
 #ifndef NOTCAT_H
 #define NOTCAT_H
 
-extern char *fmt_string_opt;
+extern char **fmt_string_opt;
 
 extern void print_note(const Note *);
 

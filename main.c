@@ -33,11 +33,13 @@
  */
 
 void notcat_getopt(int argc, char **argv) {
-    if (argc == 2) {
-        fmt_string_opt = argv[1];
-    } else if (argc > 1) {
-        fprintf(stderr, "usage: %s [fmtstring]\n", argv[0]);
-        exit(2);
+    if (argc > 1) {
+        fmt_string_opt = malloc (sizeof(char *) * argc);
+        int i;
+        for (i = 0; i < argc - 1; i++) {
+            fmt_string_opt[i] = argv[i+1];
+        }
+        fmt_string_opt[i] = NULL;
     }
 }
 

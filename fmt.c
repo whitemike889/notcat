@@ -33,13 +33,14 @@
  * summary          %s
  * body             %B          - also %(B:30) for 'first 30 chars of b'?
  * actions          ???         - TODO - %(A:key)?
- * arbitrary hints  %(H:key) ?
+ * arbitrary hints  %(h:key)
  * category         %c          - TODO?
  * expire_timeout   %e
  * urgency          %u
  */
 
-char *fmt_string_opt = "%s";
+static char *default_fmt_string_opt[] = {"%s", NULL};
+char **fmt_string_opt = default_fmt_string_opt;
 
 extern char *str_urgency(const enum Urgency u) {
     switch (u) {
@@ -129,22 +130,10 @@ static void print_hint(const Note *n, char *name) {
 
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
-extern void print_note(const Note *n) {
+static void print_note_string(const Note *n, char *fmt) {
     char *c;
     char state = NORMAL;
-
-    char *body = (n->body == NULL ? "" : malloc(1 + strlen(n->body)));
-    if (body == NULL) {
-        perror("could not allocate");
-        return;
-    }
-
-    fmt_body(n->body, body);
-
-    char *fmt_override = NULL;
-    char *fmt = fmt_string_opt;
-    if (get_string_hint(n, "format", &fmt_override))
-        fmt = fmt_override;
+    char *body = NULL;
 
     for (c = fmt; *c; c++) {
         switch (state) {
@@ -190,6 +179,14 @@ extern void print_note(const Note *n) {
                 fputs((n->summary == NULL ? "" : n->summary), stdout);
                 break;
             case 'B':
+                if (body == NULL) {
+                    body = (n->body == NULL ? "" : malloc(1 + strlen(n->body)));
+                    if (body == NULL) {
+                        perror("could not allocate");
+                        return;
+                    }
+                    fmt_body(n->body, body);
+                }
                 fputs(body, stdout);
                 break;
             case 'e':
@@ -233,12 +230,25 @@ extern void print_note(const Note *n) {
         break;
     }
 
+    if (body != NULL && n->body != NULL)
+        free(body);
+}
+
+extern void print_note(const Note *n) {
+    char *fmt_override = NULL;
+    if (get_string_hint(n, "format", &fmt_override)) {
+        print_note_string(n, fmt_override);
+        free(fmt_override);
+        return;
+    }
+
+    char **fmt_string;
+    for (fmt_string = fmt_string_opt; *fmt_string; fmt_string++) {
+        print_note_string(n, *fmt_string);
+        if (fmt_string[1])
+            putchar(' ');
+    }
+
     fputs("\n", stdout);
     fflush(stdout);
-
-    if (fmt_override != NULL)
-        free(fmt_override);
-
-    if (n->body != NULL)
-        free(body);
 }
