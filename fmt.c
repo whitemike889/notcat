@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "notlib/notlib.h"
@@ -39,22 +39,29 @@
  * urgency          %u
  */
 
-static char *default_fmt_string_opt[] = {"%s", NULL};
-char **fmt_string_opt = default_fmt_string_opt;
-
-extern char *str_urgency(const enum NLUrgency u) {
+extern void put_urgency(buffer *buf, const enum NLUrgency u) {
     switch (u) {
-        case URG_NONE: return "NONE";
-        case URG_LOW:  return "LOW";
-        case URG_NORM: return "NORMAL";
-        case URG_CRIT: return "CRITICAL";
-        default:       return "IDFK";
+    case URG_NONE:
+        put_str(buf, "NONE");
+        break;
+    case URG_LOW:
+        put_str(buf, "LOW");
+        break;
+    case URG_NORM:
+        put_str(buf, "NORMAL");
+        break;
+    case URG_CRIT:
+        put_str(buf, "CRITICAL");
+        break;
+    default:
+        put_str(buf, "IDFK");
+        break;
     }
 }
 
-static void putuint(uint32_t u) {
+static void put_uint(buffer *buf, uint32_t u) {
     if (u == 0) {
-        putchar('0');
+        put_char(buf, '0');
         return;
     }
 
@@ -67,16 +74,16 @@ static void putuint(uint32_t u) {
 
     for (idx = 0; idx < 10; idx++) {
         if (chs[idx] != 0)
-            putchar(chs[idx]);
+            put_char(buf, chs[idx]);
     }
 }
 
-static void putint(int32_t i) {
+static void put_int(buffer *buf, int32_t i) {
     if (i < 0) {
-        putchar('-');
-        putuint(UINT32_MAX - (uint32_t) i + 1);
+        put_char(buf, '-');
+        put_uint(buf, UINT32_MAX - (uint32_t) i + 1);
     } else {
-        putuint(i);
+        put_uint(buf, i);
     }
 }
 
@@ -95,7 +102,7 @@ static void fmt_body(const char *in, char *out) {
     out[i] = '\0';
 }
 
-static void print_hint(const NLNote *n, char *name) {
+static void put_hint(buffer *buf, const NLNote *n, char *name) {
     int ih;
     unsigned char bh;
     char *sh;
@@ -103,19 +110,19 @@ static void print_hint(const NLNote *n, char *name) {
     switch (nl_get_hint_type(n, name)) {
     case HINT_TYPE_INT:
         nl_get_int_hint(n, name, &ih);
-        putint(ih);
+        put_int(buf, ih);
         break;
     case HINT_TYPE_BYTE:
         nl_get_byte_hint(n, name, &bh);
-        putuint(bh);
+        put_uint(buf, bh);
         break;
     case HINT_TYPE_BOOLEAN:
         nl_get_boolean_hint(n, name, &ih);
-        fputs((ih ? "TRUE" : "FALSE"), stdout);
+        put_str(buf, (ih ? "TRUE" : "FALSE"));
         break;
     case HINT_TYPE_STRING:
         nl_get_string_hint(n, name, &sh);
-        fputs(sh, stdout);
+        put_str(buf, sh);
         free(sh);
         break;
     default:
@@ -128,9 +135,7 @@ static void print_hint(const NLNote *n, char *name) {
 #define PCTPAREN    2
 #define HINT        3
 
-/* We assume, maybe incorrectly, that printf has OK buffering behavior */
-/* TODO: make sure we're unicode-friendly here */
-static void print_note_string(const NLNote *n, char *fmt) {
+extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n) {
     char *c;
     char state = NORMAL;
     char *body = NULL;
@@ -143,11 +148,12 @@ static void print_note_string(const NLNote *n, char *fmt) {
             for (c2 = c; *c2 && *c2 != ')'; c2++)
                 ;
             if (!*c2) {
-                printf("%%(h:%s", c);
+                put_str(buf, "%(h:");
+                put_str(buf, c);
                 c = c2 - 1;
             } else {
                 *c2 = '\0';
-                print_hint(n, c);
+                put_hint(buf, n, c);
                 *c2 = ')';
                 c = c2;
                 state = NORMAL;
@@ -162,7 +168,8 @@ static void print_note_string(const NLNote *n, char *fmt) {
                     break;
                 }
             default:
-                printf("%%(%c", *c);
+                put_str(buf, "%(");
+                put_char(buf, *c);
                 state = NORMAL;
                 break;
             }
@@ -170,40 +177,36 @@ static void print_note_string(const NLNote *n, char *fmt) {
         case PCT:
             switch (*c) {
             case 'i':
-                putuint(n->id);
+                put_uint(buf, n->id);
                 break;
             case 'a':
-                fputs((n->appname == NULL ? "" : n->appname), stdout);
+                put_str(buf, (n->appname == NULL ? "" : n->appname));
                 break;
             case 's':
-                fputs((n->summary == NULL ? "" : n->summary), stdout);
+                put_str(buf, (n->summary == NULL ? "" : n->summary));
                 break;
             case 'B':
                 if (body == NULL) {
                     body = (n->body == NULL ? "" : malloc(1 + strlen(n->body)));
-                    if (body == NULL) {
-                        perror("could not allocate");
-                        return;
-                    }
                     fmt_body(n->body, body);
                 }
-                fputs(body, stdout);
+                put_str(buf, body);
                 break;
             case 'e':
-                putint(n->timeout);
+                put_int(buf, n->timeout);
                 break;
             case 'u':
-                fputs(str_urgency(n->urgency), stdout);
+                put_urgency(buf, n->urgency);
                 break;
             case '%':
-                putchar('%');
+                put_char(buf, '%');
                 break;
             case '(':
                 state = PCTPAREN;
                 break;
             default:
-                putchar('%');
-                putchar(*c);
+                put_char(buf, '%');
+                put_char(buf, *c);
             }
             if (state == PCT) {
                 state = NORMAL;
@@ -215,7 +218,7 @@ static void print_note_string(const NLNote *n, char *fmt) {
                 state = PCT;
                 break;
             default:
-                printf("%c", *c);
+                put_char(buf, *c);
             }
             break;
         }
@@ -223,10 +226,10 @@ static void print_note_string(const NLNote *n, char *fmt) {
 
     switch (state) {
     case PCT:
-        fputs("%", stdout);
+        put_char(buf, '%');
         break;
     case PCTPAREN:
-        fputs("%(", stdout);
+        put_str(buf, "%(");
         break;
     }
 
@@ -234,21 +237,8 @@ static void print_note_string(const NLNote *n, char *fmt) {
         free(body);
 }
 
-extern void print_note(const NLNote *n) {
-    char *fmt_override = NULL;
-    if (nl_get_string_hint(n, "format", &fmt_override)) {
-        print_note_string(n, fmt_override);
-        free(fmt_override);
-        return;
-    }
-
-    char **fmt_string;
-    for (fmt_string = fmt_string_opt; *fmt_string; fmt_string++) {
-        print_note_string(n, *fmt_string);
-        if (fmt_string[1])
-            putchar(' ');
-    }
-
-    fputs("\n", stdout);
-    fflush(stdout);
+extern char *fmt_note(char *fmt, const NLNote *n) {
+    buffer *buf = new_buffer(BUF_LEN);
+    fmt_note_buf(buf, fmt, n);
+    return dump_buffer(buf);
 }

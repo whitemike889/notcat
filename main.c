@@ -32,6 +32,9 @@
  *  - markupfmt
  */
 
+static char *default_fmt_string_opt[] = {"%s", NULL};
+static char **fmt_string_opt = default_fmt_string_opt;
+
 void notcat_getopt(int argc, char **argv) {
     if (argc > 1) {
         fmt_string_opt = malloc (sizeof(char *) * argc);
@@ -41,6 +44,31 @@ void notcat_getopt(int argc, char **argv) {
         }
         fmt_string_opt[i] = NULL;
     }
+}
+
+static void print_note(const NLNote *n) {
+    buffer *buf = new_buffer(BUF_LEN);
+
+    char *fmt_override = NULL;
+    if (nl_get_string_hint(n, "format", &fmt_override)) {
+        fmt_note_buf(buf, fmt_override, n);
+        free(fmt_override);
+        goto print_buf;
+    }
+
+    char **fmt_string;
+    for (fmt_string = fmt_string_opt; *fmt_string; fmt_string++) {
+        fmt_note_buf(buf, *fmt_string, n);
+        if (fmt_string[1])
+            put_char(buf, ' ');
+    }
+
+print_buf:
+    put_char(buf, '\n');
+    char *fin = dump_buffer(buf);
+    fputs(fin, stdout);
+    free(fin);
+    fflush(stdout);
 }
 
 static uint32_t rc = 0;

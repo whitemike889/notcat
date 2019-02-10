@@ -20,8 +20,24 @@
 #ifndef NOTCAT_H
 #define NOTCAT_H
 
-extern char **fmt_string_opt;
+#include "notlib/notlib.h"
 
-extern void print_note(const NLNote *);
+// buffer.c
+
+#define BUF_LEN 512
+
+typedef struct _buffer buffer;
+
+extern buffer *new_buffer(size_t);
+extern char *dump_buffer(buffer *buf);
+
+extern void put_strn(buffer *, size_t, const char *);
+extern void put_str (buffer *, const char *);
+extern void put_char(buffer *, char);
+
+// fmt.c
+
+extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n);
+extern char *fmt_note(char *fmt, const NLNote *n);
 
 #endif
