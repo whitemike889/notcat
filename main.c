@@ -45,12 +45,12 @@ void notcat_getopt(int argc, char **argv) {
 
 static uint32_t rc = 0;
 
-void inc_print(const Note *n) {
+void inc_print(const NLNote *n) {
     ++rc;
     print_note(n);
 }
 
-void dec(const Note *n) {
+void dec(const NLNote *n) {
     if (--rc == 0) {
         printf("\n");
         fflush(stdout);
@@ -60,12 +60,12 @@ void dec(const Note *n) {
 int main(int argc, char **argv) {
     notcat_getopt(argc, argv);
 
-    NoteCallbacks cbs = {
+    NLNoteCallbacks cbs = {
         .notify = inc_print,
         .close = dec,
         .replace = print_note
     };
-    ServerInfo info = {
+    NLServerInfo info = {
         .app_name = "notcat",
         .author = "jpco",
         .version = "0.2"

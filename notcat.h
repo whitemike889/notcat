@@ -22,6 +22,6 @@
 
 extern char **fmt_string_opt;
 
-extern void print_note(const Note *);
+extern void print_note(const NLNote *);
 
 #endif

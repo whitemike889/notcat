@@ -42,7 +42,7 @@
 static char *default_fmt_string_opt[] = {"%s", NULL};
 char **fmt_string_opt = default_fmt_string_opt;
 
-extern char *str_urgency(const enum Urgency u) {
+extern char *str_urgency(const enum NLUrgency u) {
     switch (u) {
         case URG_NONE: return "NONE";
         case URG_LOW:  return "LOW";
@@ -95,26 +95,26 @@ static void fmt_body(const char *in, char *out) {
     out[i] = '\0';
 }
 
-static void print_hint(const Note *n, char *name) {
+static void print_hint(const NLNote *n, char *name) {
     int ih;
     unsigned char bh;
     char *sh;
 
-    switch (get_hint_type(n, name)) {
+    switch (nl_get_hint_type(n, name)) {
     case HINT_TYPE_INT:
-        get_int_hint(n, name, &ih);
+        nl_get_int_hint(n, name, &ih);
         putint(ih);
         break;
     case HINT_TYPE_BYTE:
-        get_byte_hint(n, name, &bh);
+        nl_get_byte_hint(n, name, &bh);
         putuint(bh);
         break;
     case HINT_TYPE_BOOLEAN:
-        get_boolean_hint(n, name, &ih);
+        nl_get_boolean_hint(n, name, &ih);
         fputs((ih ? "TRUE" : "FALSE"), stdout);
         break;
     case HINT_TYPE_STRING:
-        get_string_hint(n, name, &sh);
+        nl_get_string_hint(n, name, &sh);
         fputs(sh, stdout);
         free(sh);
         break;
@@ -130,7 +130,7 @@ static void print_hint(const Note *n, char *name) {
 
 /* We assume, maybe incorrectly, that printf has OK buffering behavior */
 /* TODO: make sure we're unicode-friendly here */
-static void print_note_string(const Note *n, char *fmt) {
+static void print_note_string(const NLNote *n, char *fmt) {
     char *c;
     char state = NORMAL;
     char *body = NULL;
@@ -234,9 +234,9 @@ static void print_note_string(const Note *n, char *fmt) {
         free(body);
 }
 
-extern void print_note(const Note *n) {
+extern void print_note(const NLNote *n) {
     char *fmt_override = NULL;
-    if (get_string_hint(n, "format", &fmt_override)) {
+    if (nl_get_string_hint(n, "format", &fmt_override)) {
         print_note_string(n, fmt_override);
         free(fmt_override);
         return;
