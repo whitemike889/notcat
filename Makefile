@@ -1,6 +1,6 @@
 CC = gcc
 
-CSRC = fmt.c main.c buffer.c
+CSRC = fmt.c main.c buffer.c run.c
 HSRC = notcat.h
 
 CFLAGS = -Wall -Werror -O2

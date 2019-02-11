@@ -144,7 +144,7 @@ extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n) {
         switch (state) {
         case HINT: {
             char *c2;
-            c++;
+            ++c;
             for (c2 = c; *c2 && *c2 != ')'; c2++)
                 ;
             if (!*c2) {

@@ -20,76 +20,80 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "notlib/notlib.h"
 #include "notcat.h"
 
 /**
  * TODO: args for:
- *  - onnotify
- *  - onclose
  *  - hreffmt
  *  - markupfmt
  */
 
-static char *default_fmt_string_opt[] = {"%s", NULL};
-static char **fmt_string_opt = default_fmt_string_opt;
+static char *on_notify_opt = NULL;
+static char *on_close_opt = NULL;
 
 void notcat_getopt(int argc, char **argv) {
-    if (argc > 1) {
-        fmt_string_opt = malloc (sizeof(char *) * argc);
-        int i;
-        for (i = 0; i < argc - 1; i++) {
-            fmt_string_opt[i] = argv[i+1];
+    char **fmt_opt = malloc (sizeof(char *) * argc);
+    size_t fo_idx = 0;
+
+    int av_idx;
+    int skip = 0;
+    for (av_idx = 1; av_idx < argc; av_idx++) {
+        if (!skip && !strncmp("--onnotify=", argv[av_idx], 11)) {
+            if (argv[av_idx][11] != '\0')
+                on_notify_opt = argv[av_idx] + 11;
+            continue;
+        } else if (!skip && !strncmp("--onclose=", argv[av_idx], 10)) {
+            if (argv[av_idx][10] != '\0')
+                on_close_opt = argv[av_idx] + 10;
+            continue;
+        } else if (!skip && !strcmp("-s", argv[av_idx])) {
+            shell_run_opt = 1;
+            continue;
+        } else if (!skip && !strcmp("--", argv[av_idx])) {
+            skip = 1;
+            continue;
         }
-        fmt_string_opt[i] = NULL;
-    }
-}
-
-static void print_note(const NLNote *n) {
-    buffer *buf = new_buffer(BUF_LEN);
-
-    char *fmt_override = NULL;
-    if (nl_get_string_hint(n, "format", &fmt_override)) {
-        fmt_note_buf(buf, fmt_override, n);
-        free(fmt_override);
-        goto print_buf;
+        fmt_opt[fo_idx++] = argv[av_idx];
     }
 
-    char **fmt_string;
-    for (fmt_string = fmt_string_opt; *fmt_string; fmt_string++) {
-        fmt_note_buf(buf, *fmt_string, n);
-        if (fmt_string[1])
-            put_char(buf, ' ');
-    }
-
-print_buf:
-    put_char(buf, '\n');
-    char *fin = dump_buffer(buf);
-    fputs(fin, stdout);
-    free(fin);
-    fflush(stdout);
+    if (fo_idx > 0) {
+        fmt_string_opt_len = fo_idx;
+        fmt_string_opt = fmt_opt;
+    } else free(fmt_opt);
 }
 
 static uint32_t rc = 0;
 
-void inc_print(const NLNote *n) {
+void inc(const NLNote *n) {
     ++rc;
-    print_note(n);
+    if (!on_notify_opt || (!strcmp(on_notify_opt, "echo") && !shell_run_opt)) {
+        print_note(n);
+    } else {
+        run_cmd(on_notify_opt, n);
+    }
+    fflush(stdout);
 }
 
 void dec(const NLNote *n) {
-    if (--rc == 0) {
-        printf("\n");
-        fflush(stdout);
+    --rc;
+    if (!on_close_opt) {
+        if (rc == 0) {
+            printf("\n");
+        }
+    } else {
+        run_cmd(on_close_opt, n);
     }
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
     notcat_getopt(argc, argv);
 
     NLNoteCallbacks cbs = {
-        .notify = inc_print,
+        .notify = inc,
         .close = dec,
         .replace = print_note
     };

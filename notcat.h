@@ -40,4 +40,13 @@ extern void put_char(buffer *, char);
 extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n);
 extern char *fmt_note(char *fmt, const NLNote *n);
 
+// run.c
+
+extern char **fmt_string_opt;
+extern size_t fmt_string_opt_len;
+extern int shell_run_opt;
+
+extern void print_note(const NLNote *n);
+extern void run_cmd(char *cmd, const NLNote *n);
+
 #endif
