@@ -37,16 +37,16 @@ static char *on_notify_opt = NULL;
 static char *on_close_opt = NULL;
 
 static void usage(int code) {
-    fprintf(stderr, "Usage:"
-            "  notcat [-se] [--onnotify=<command>] [--onclose=<command>] [format strings]..."
-            ""
-            "Options:"
-            "  --onnotify=<command>  Command to run on each notification created (default: echo)"
-            "  --onclose=<command>   Command to run on each notification closed"
-            "  -s, --shell           Execute commands in a subshell"
-            "  -e, --env             Pass notifications to commands in the environment"
-            "  -h, --help            This help text"
-            "  --                    Stop flag parsing"
+    fprintf(stderr, "Usage:\n"
+            "  notcat [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
+            "\n"
+            "Options:\n"
+            "  --onnotify=<cmd>  Command to run on each notification created\n"
+            "  --onclose=<cmd>   Command to run on each notification closed\n"
+            "  -s, --shell       Execute commands in a subshell\n"
+            "  -e, --env         Pass notifications to commands in the environment\n"
+            "  -h, --help        This help text\n"
+            "  --                Stop flag parsing\n"
            );
 
     exit(code);
