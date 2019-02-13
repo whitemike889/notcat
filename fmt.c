@@ -39,24 +39,18 @@
  * urgency          %u
  */
 
-extern void put_urgency(buffer *buf, const enum NLUrgency u) {
+extern char *str_urgency(const enum NLUrgency u) {
     switch (u) {
-    case URG_NONE:
-        put_str(buf, "NONE");
-        break;
-    case URG_LOW:
-        put_str(buf, "LOW");
-        break;
-    case URG_NORM:
-        put_str(buf, "NORMAL");
-        break;
-    case URG_CRIT:
-        put_str(buf, "CRITICAL");
-        break;
-    default:
-        put_str(buf, "IDFK");
-        break;
+        case URG_NONE: return "NONE";
+        case URG_LOW:  return "LOW";
+        case URG_NORM: return "NORMAL";
+        case URG_CRIT: return "CRITICAL";
+        default:       return "IDFK";
     }
+}
+
+static void put_urgency(buffer *buf, const enum NLUrgency u) {
+    put_str(buf, str_urgency(u));
 }
 
 static void put_uint(buffer *buf, uint32_t u) {
@@ -102,28 +96,23 @@ static void fmt_body(const char *in, char *out) {
     out[i] = '\0';
 }
 
-static void put_hint(buffer *buf, const NLNote *n, char *name) {
-    int ih;
-    unsigned char bh;
-    char *sh;
+static void put_hint(buffer *buf, const NLNote *n, const char *name) {
+    NLHint h;
+    if (!nl_get_hint(n, name, &h))
+        return;
 
-    switch (nl_get_hint_type(n, name)) {
+    switch (h.type) {
     case HINT_TYPE_INT:
-        nl_get_int_hint(n, name, &ih);
-        put_int(buf, ih);
+        put_int(buf, h.d.i);
         break;
     case HINT_TYPE_BYTE:
-        nl_get_byte_hint(n, name, &bh);
-        put_uint(buf, bh);
+        put_uint(buf, h.d.byte);
         break;
     case HINT_TYPE_BOOLEAN:
-        nl_get_boolean_hint(n, name, &ih);
-        put_str(buf, (ih ? "TRUE" : "FALSE"));
+        put_str(buf, (h.d.bl ? "TRUE" : "FALSE"));
         break;
     case HINT_TYPE_STRING:
-        nl_get_string_hint(n, name, &sh);
-        put_str(buf, sh);
-        free(sh);
+        put_str(buf, h.d.str);
         break;
     default:
         break;
@@ -135,8 +124,8 @@ static void put_hint(buffer *buf, const NLNote *n, char *name) {
 #define PCTPAREN    2
 #define HINT        3
 
-extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n) {
-    char *c;
+extern void fmt_note_buf(buffer *buf, const char *fmt, const NLNote *n) {
+    const char *c;
     char state = NORMAL;
     char *body = NULL;
 
@@ -145,7 +134,7 @@ extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n) {
         case HINT: {
             char *c2;
             ++c;
-            for (c2 = c; *c2 && *c2 != ')'; c2++)
+            for (c2 = (char *)c; *c2 && *c2 != ')'; c2++)
                 ;
             if (!*c2) {
                 put_str(buf, "%(h:");
@@ -237,7 +226,7 @@ extern void fmt_note_buf(buffer *buf, char *fmt, const NLNote *n) {
         free(body);
 }
 
-extern char *fmt_note(char *fmt, const NLNote *n) {
+extern char *fmt_note(const char *fmt, const NLNote *n) {
     buffer *buf = new_buffer(BUF_LEN);
     fmt_note_buf(buf, fmt, n);
     return dump_buffer(buf);

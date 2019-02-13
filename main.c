@@ -31,47 +31,91 @@
  *  - markupfmt
  */
 
+static char *DEFAULT_on_notify_opt = "echo";
+static char *DEFAULT_on_close_opt = "";
 static char *on_notify_opt = NULL;
 static char *on_close_opt = NULL;
 
-void notcat_getopt(int argc, char **argv) {
-    char **fmt_opt = malloc (sizeof(char *) * argc);
+static void usage(int code) {
+    fprintf(stderr, "Usage:"
+            "  notcat [-se] [--onnotify=<command>] [--onclose=<command>] [format strings]..."
+            ""
+            "Options:"
+            "  --onnotify=<command>  Command to run on each notification created (default: echo)"
+            "  --onclose=<command>   Command to run on each notification closed"
+            "  -s, --shell           Execute commands in a subshell"
+            "  -e, --env             Pass notifications to commands in the environment"
+            "  -h, --help            This help text"
+            "  --                    Stop flag parsing"
+           );
+
+    exit(code);
+}
+
+static void notcat_getopt(int argc, char **argv) {
+    on_notify_opt = DEFAULT_on_notify_opt;
+    on_close_opt = DEFAULT_on_close_opt;
+
     size_t fo_idx = 0;
 
     int av_idx;
     int skip = 0;
     for (av_idx = 1; av_idx < argc; av_idx++) {
-        if (!skip && !strncmp("--onnotify=", argv[av_idx], 11)) {
-            if (argv[av_idx][11] != '\0')
-                on_notify_opt = argv[av_idx] + 11;
-            continue;
-        } else if (!skip && !strncmp("--onclose=", argv[av_idx], 10)) {
-            if (argv[av_idx][10] != '\0')
-                on_close_opt = argv[av_idx] + 10;
-            continue;
-        } else if (!skip && !strcmp("-s", argv[av_idx])) {
-            shell_run_opt = 1;
-            continue;
-        } else if (!skip && !strcmp("--", argv[av_idx])) {
-            skip = 1;
+        char *arg = argv[av_idx];
+        if (!skip && arg[0] == '-' && arg[1]) {
+            if (arg[1] == '-' && !arg[2]) {
+                skip = 1;
+                continue;
+            }
+            if (arg[1] != '-') {
+                char *c;
+                for (c = arg + 1; *c; c++) {
+                    switch (*c) {
+                    case 's':
+                        shell_run_opt = 1;
+                        break;
+                    case 'e':
+                        use_env_opt = 1;
+                        break;
+                    case 'h':
+                        usage(0);
+                    default:
+                        usage(2);
+                    }
+                }
+                continue;
+            }
+
+            arg = arg + 2;
+            if (!strncmp("onnotify=", arg, 9)) {
+                on_notify_opt = arg + 9;
+            } else if (!strncmp("onclose=", arg, 8)) {
+                on_close_opt = arg + 8;
+            } else if (!strcmp("shell", arg)) {
+                shell_run_opt = 1;
+            } else if (!strcmp("env", arg)) {
+                use_env_opt = 1;
+            } else if (!strcmp("help", arg)) {
+                usage(0);
+            }
             continue;
         }
-        fmt_opt[fo_idx++] = argv[av_idx];
+        argv[fo_idx++] = argv[av_idx];
     }
 
     if (fo_idx > 0) {
         fmt_string_opt_len = fo_idx;
-        fmt_string_opt = fmt_opt;
-    } else free(fmt_opt);
+        fmt_string_opt = argv;
+    }
 }
 
 static uint32_t rc = 0;
 
 void inc(const NLNote *n) {
     ++rc;
-    if (!on_notify_opt || (!strcmp(on_notify_opt, "echo") && !shell_run_opt)) {
+    if (!strcmp(on_notify_opt, "echo") && !shell_run_opt) {
         print_note(n);
-    } else {
+    } else if (*on_notify_opt) {
         run_cmd(on_notify_opt, n);
     }
     fflush(stdout);
@@ -79,11 +123,11 @@ void inc(const NLNote *n) {
 
 void dec(const NLNote *n) {
     --rc;
-    if (!on_close_opt) {
+    if (on_close_opt == DEFAULT_on_close_opt) {
         if (rc == 0) {
             printf("\n");
         }
-    } else {
+    } else if (*on_close_opt) {
         run_cmd(on_close_opt, n);
     }
     fflush(stdout);

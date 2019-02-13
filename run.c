@@ -32,25 +32,23 @@ static char *default_fmt_string_opt[] = {"%s"};
 char **fmt_string_opt = default_fmt_string_opt;
 size_t fmt_string_opt_len = 1;
 int shell_run_opt = 0;
+int use_env_opt = 0;
 
 extern void print_note(const NLNote *n) {
     buffer *buf = new_buffer(BUF_LEN);
 
-    char *fmt_override = NULL;
+    const char *fmt_override = NULL;
     if (nl_get_string_hint(n, "format", &fmt_override)) {
         fmt_note_buf(buf, fmt_override, n);
-        free(fmt_override);
-        goto print_buf;
+    } else {
+        size_t fmt_idx;
+        for (fmt_idx = 0; fmt_idx < fmt_string_opt_len; fmt_idx++) {
+            fmt_note_buf(buf, fmt_string_opt[fmt_idx], n);
+            if (fmt_idx < fmt_string_opt_len - 1)
+                put_char(buf, ' ');
+        }
     }
 
-    size_t fmt_idx;
-    for (fmt_idx = 0; fmt_idx < fmt_string_opt_len; fmt_idx++) {
-        fmt_note_buf(buf, fmt_string_opt[fmt_idx], n);
-        if (fmt_idx < fmt_string_opt_len - 1)
-            put_char(buf, ' ');
-    }
-
-print_buf:
     put_char(buf, '\n');
     char *fin = dump_buffer(buf);
     fputs(fin, stdout);
@@ -59,9 +57,11 @@ print_buf:
 
 extern void run_cmd(char *cmd, const NLNote *n) {
     size_t prefix_len = (shell_run_opt ? 4 : 1);
+    size_t fmt_len = (fmt_string_opt == default_fmt_string_opt && use_env_opt
+            ? 0 : fmt_string_opt_len);
 
     char **cmd_argv = malloc(sizeof(char *)
-            * (1 + prefix_len + fmt_string_opt_len));
+            * (1 + prefix_len + fmt_len));
 
     static char *sh = NULL;
     if (!sh && !(sh = getenv("SHELL")))
@@ -77,19 +77,37 @@ extern void run_cmd(char *cmd, const NLNote *n) {
     }
 
     size_t i;
-    for (i = 0; i < fmt_string_opt_len; i++) {
+    for (i = 0; i < fmt_len; i++) {
         cmd_argv[i+prefix_len] = fmt_note(fmt_string_opt[i], n);
     }
-    cmd_argv[fmt_string_opt_len + prefix_len] = NULL;
+    cmd_argv[fmt_len + prefix_len] = NULL;
+
+    if (use_env_opt) {
+        char str[12];  // big enough to store a 32-bit int
+
+        setenv("NOTE_APP_NAME", n->appname, 1);
+        setenv("NOTE_SUMMARY", n->summary, 1);
+        setenv("NOTE_BODY", n->body, 1);
+        setenv("NOTE_URGENCY", str_urgency(n->urgency), 1);
+
+        snprintf(str, 12, "%u", n->id);
+        setenv("NOTE_ID", str, 1);
+
+        snprintf(str, 12, "%d", n->timeout);
+        setenv("NOTE_TIMEOUT", str, 1);
+
+        // TODO: Figure out a sensible way to do hints
+    }
 
     if (!fork()) {
-        int err = execvp(cmd_argv[0], cmd_argv);
+        extern char **environ;
+        int err = execve(cmd_argv[0], cmd_argv, environ);
         perror(cmd_argv[0]);
         exit(err);
     }
     wait(NULL);
 
-    for (i = 0; i < fmt_string_opt_len; i++)
+    for (i = 0; i < fmt_len; i++)
         free(cmd_argv[i+prefix_len]);
 
     free(cmd_argv);
