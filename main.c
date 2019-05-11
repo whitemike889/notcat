@@ -36,9 +36,9 @@ static char *DEFAULT_on_close_opt = "";
 static char *on_notify_opt = NULL;
 static char *on_close_opt = NULL;
 
-static void usage(int code) {
+static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
-            "  notcat [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
+            "  %s [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
             "\n"
             "Options:\n"
             "  --onnotify=<cmd>  Command to run on each notification created\n"
@@ -46,8 +46,8 @@ static void usage(int code) {
             "  -s, --shell       Execute commands in a subshell\n"
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
-            "  --                Stop flag parsing\n"
-           );
+            "  --                Stop flag parsing\n",
+           arg0);
 
     exit(code);
 }
@@ -57,6 +57,7 @@ static void notcat_getopt(int argc, char **argv) {
     on_close_opt = DEFAULT_on_close_opt;
 
     size_t fo_idx = 0;
+    char *arg0 = argv[0];
 
     int av_idx;
     int skip = 0;
@@ -78,9 +79,9 @@ static void notcat_getopt(int argc, char **argv) {
                         use_env_opt = 1;
                         break;
                     case 'h':
-                        usage(0);
+                        usage(arg0, 0);
                     default:
-                        usage(2);
+                        usage(arg0, 2);
                     }
                 }
                 continue;
@@ -96,7 +97,7 @@ static void notcat_getopt(int argc, char **argv) {
             } else if (!strcmp("env", arg)) {
                 use_env_opt = 1;
             } else if (!strcmp("help", arg)) {
-                usage(0);
+                usage(arg0, 0);
             }
             continue;
         }
