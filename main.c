@@ -38,6 +38,7 @@ static char *on_close_opt = NULL;
 
 static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
+            "  %s [-h | --help]\n"
             "  %s [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
             "\n"
             "Options:\n"
@@ -47,7 +48,7 @@ static void usage(char *arg0, int code) {
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
             "  --                Stop flag parsing\n",
-           arg0);
+           arg0, arg0);
 
     exit(code);
 }

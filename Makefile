@@ -1,4 +1,14 @@
+# Basic configuration.
+
 CC = gcc
+INSTALL = install
+MKDIR_P = mkdir -p
+
+bindir = /usr/local/bin
+mandir = /usr/local/man
+srcdir = .
+
+# End basic configuration.
 
 CSRC = fmt.c main.c buffer.c run.c
 HSRC = notcat.h
@@ -16,8 +26,10 @@ libnotlib.a	:
 	$(MAKE) static -C notlib
 
 install		: notcat
-	mkdir -p /usr/local/bin
-	cp notcat /usr/local/bin
+	$(MKDIR_P) $(bindir)
+	$(INSTALL) -s $(srcdir)/notcat $(bindir)
+	$(MKDIR_P) $(mandir)/man1
+	$(INSTALL) $(srcdir)/notcat.1 $(mandir)/man1
 
 clean		:
 	$(MAKE) clean -C notlib

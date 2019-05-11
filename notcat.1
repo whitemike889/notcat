@@ -1,0 +1,194 @@
+.TH NOTCAT 1
+.SH NAME
+notcat \- print notifications
+.SH SYNOPSIS
+.B notcat
+\fR[\fB\-h\fR | \fB\-\-help\fR]
+.br
+.B notcat
+\fR[\fB\-se\fR] \fR[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR] [\-\-] [\fIFORMAT\fR]...
+.SH DESCRIPTION
+.B notcat
+is a D-Bus notification daemon which formats and prints received
+notifications to standard output, or runs arbitrary subcommands when
+notifications are received and deleted.
+.PP
+The
+.I FORMAT
+arguments control the output of \fBnotcat\fR, or, if
+\fB\-\-onnotify\fR/\fB\-\-onclose\fR is supplied, the arguments provided
+to invoked subcommands.
+They support arbitrary strings.
+If
+.B notcat
+finds one of the following format sequences among them, then it will
+replace it in-place with the appropriate value, \fBprintf\fR-style.
+.TP
+%%
+A literal "%"
+.TP
+%i
+Notification ID
+.TP
+%a
+App name
+.TP
+%s
+Summary
+.TP
+%B
+Body text, with newlines replaced with spaces to maintain printing
+one line per notification
+.TP
+%e
+Expiration timeout in milliseconds; 0 indicates "no timeout", and -1
+indicates "timeout is up to the notification server"
+.TP
+%u
+Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
+.TP
+%(h:\fINAME\fR)
+Hint value with the given
+.I NAME
+.PP
+If no
+.I FORMAT
+arguments are provided, then
+.B notcat
+defaults to '\fB%s\fR'.
+.PP
+If the
+.B \-e
+argument is supplied, then instead of the formatted arguments, subcommands are invoked with the following environment variables set to the appropriate values:
+.TP
+NOTE_ID
+Notification ID
+.TP
+NOTE_APP_NAME
+App name
+.TP
+NOTE_SUMMARY
+Summary
+.TP
+NOTE_BODY
+Notification body
+.TP
+NOTE_URGENCY
+Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
+.TP
+NOTE_TIMEOUT
+Expiration timeout in milliseconds; 0 indicates "no timeout", and -1
+indicates "timeout is up to the notification server"
+.PP
+Arbitrary hints are not yet supported with the
+.B \-e
+flag.
+.B \-e
+is useless when used without \fB\-\-onnotify\fR, because
+\fBnotcat\fR's default behavior only introspects the
+.I FORMAT
+arguments.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display help and exit.
+.TP
+\fB\-s\fR
+Run subcommands given via
+.B \-\-onnotify
+and
+.B \-\-onclose
+within a subshell, using
+.IP
+$\fISHELL\fR \-c $\fICMD\fR
+.TP
+\fB\-e\fR
+Pass subcommands given via
+.B \-\-onnotify
+and
+.B \-\-onclose
+information about notifications through the environment, rather than
+using formatted arguments.
+.TP
+\fB\-\-onnotify=\fICMD\fR
+Run the command
+.I CMD
+each time a notification is created or replaced.
+By default, the command is invoked via \fBexecve\fR, with its
+arguments set to the interpolated
+.I FORMAT
+arguments provided to \fBnotcat\fR.
+.IP
+If not provided,
+.B notcat
+defaults to its built-in '\fBecho\fR'.
+.TP
+\fB\-\-onclose=\fICMD\fR
+Run the command
+.I CMD
+each time a notification is closed.
+By default, the command is invoked via \fBexecve\fR, with its
+arguments set to the interpolated
+.I FORMAT
+arguments provided to \fBnotcat\fR.
+.IP
+If not provided, then \fBnotcat\fR's default behavior is to, if no
+notifications are left open, print an empty line, else nothing.
+.TP
+\fB\-\-\fR
+Stop option parsing.
+This may be used in case there are
+.I FORMAT
+arguments which would get inappropriately parsed as options to
+\fBnotcat\fR.
+.SH EXAMPLES
+Simple invocation to print notification summaries and bodies as they
+arrive, and clear the most recent line when all notifications are
+closed:
+.IP
+\fB$\fR notcat %s %B
+.PP
+Invocation that has the same behavior as above, but by invoking
+/bin/echo in a subshell on each notification:
+.IP
+\fB$\fR notcat \-s '\-\-onnotify=/bin/echo $*' %s %B
+.PP
+Note the trailing '$*' in the command; this is required for the
+invoked /bin/echo to receive the args from its calling shell.
+.PP
+Invocation that has (roughly) the same behavior as above, but using
+environment variables this time:
+.IP
+\fB$\fR notcat \-se '\-\-onnotify=/bin/echo $NOTE_SUMMARY $NOTE_BODY'
+.PP
+This invocation has the disadvantage of being somewhat more verbose,
+and also loses the automatic formatting that
+.B notcat
+applies to the notification body.
+.SH AUTHOR
+.B notcat
+is written by Jack Conger (jpco).
+.PP
+Both
+.B notcat
+and this manual page are released under the GNU General Public
+License, version 3+.
+.SH ERRATA
+Actions, markup, categories, and links are not yet supported.
+Moreover,
+.B notcat
+lies and claims that actions are supported.
+.PP
+Some capabilities will likely never be supported.
+In particular, the \fBbody-images\fR, \fBicon-multi\fR,
+\fBicon-static\fR, and \fBsound\fR capabilities are outside the
+intended design of \fBnotcat\fR.
+.PP
+Only arbitrary hints of type string, int, boolean, or byte are
+understood.
+More complex types of hints can only be supported specially.
+.SH SEE ALSO
+\fBnotify\-send\fR\|(1)
+.SH STANDARDS
+.B notcat
+conforms to version 1.2 of the Desktop Notifications Specification.
