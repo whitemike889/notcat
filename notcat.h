@@ -51,4 +51,10 @@ extern int use_env_opt;
 extern void print_note(const NLNote *n);
 extern void run_cmd(char *cmd, const NLNote *n);
 
+// client.c
+
+extern int close_note(char *arg);
+extern int get_capabilities();
+extern int get_server_information();
+
 #endif

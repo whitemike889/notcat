@@ -10,7 +10,7 @@ srcdir = .
 
 # End basic configuration.
 
-CSRC = fmt.c main.c buffer.c run.c
+CSRC = fmt.c main.c buffer.c run.c client.c
 HSRC = notcat.h
 
 CFLAGS = -Wall -Werror -O2

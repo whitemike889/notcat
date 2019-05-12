@@ -3,10 +3,13 @@
 notcat \- print notifications
 .SH SYNOPSIS
 .B notcat
-\fR[\fB\-h\fR | \fB\-\-help\fR]
+[\fB\-h\fR | \fB\-\-help\fR]
 .br
 .B notcat
-\fR[\fB\-se\fR] \fR[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR] [\-\-] [\fIFORMAT\fR]...
+[\fB\-se\fR] \fR[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR] [\-\-] [\fIFORMAT\fR]...
+.br
+.B notcat
+[ \fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR ]
 .SH DESCRIPTION
 .B notcat
 is a D-Bus notification daemon which formats and prints received
@@ -93,7 +96,7 @@ arguments.
 \fB\-h\fR, \fB\-\-help\fR
 Display help and exit.
 .TP
-\fB\-s\fR
+\fB\-s\fR, \fB\-\-shell\fR
 Run subcommands given via
 .B \-\-onnotify
 and
@@ -102,7 +105,7 @@ within a subshell, using
 .IP
 $\fISHELL\fR \-c $\fICMD\fR
 .TP
-\fB\-e\fR
+\fB\-e\fR, \fB\-\-env\fR
 Pass subcommands given via
 .B \-\-onnotify
 and
@@ -141,6 +144,21 @@ This may be used in case there are
 .I FORMAT
 arguments which would get inappropriately parsed as options to
 \fBnotcat\fR.
+.SH CLIENT COMMANDS
+The
+.B notcat
+command can be used to interact as a client with an already-running
+notification server.
+Existing commands are:
+.TP
+\fBclose\fR \fIID\fR
+Close the notification with the given \fIID\fR.
+.TP
+\fBgetcapabilities\fR
+Get the capabilities of the notification server.
+.TP
+\fBgetserverinfo\fR
+Get basic information about the notification server.
 .SH EXAMPLES
 Simple invocation to print notification summaries and bodies as they
 arrive, and clear the most recent line when all notifications are
@@ -165,6 +183,8 @@ This invocation has the disadvantage of being somewhat more verbose,
 and also loses the automatic formatting that
 .B notcat
 applies to the notification body.
+However, using \-e can make complex shell scripts run as subcommands
+significantly clearer.
 .SH AUTHOR
 .B notcat
 is written by Jack Conger (jpco).

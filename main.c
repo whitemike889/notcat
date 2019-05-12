@@ -40,6 +40,7 @@ static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
             "  %s [-h | --help]\n"
             "  %s [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
+            "  %s [ close <id> | getcapabilities | getserverinfo ]\n"
             "\n"
             "Options:\n"
             "  --onnotify=<cmd>  Command to run on each notification created\n"
@@ -48,7 +49,7 @@ static void usage(char *arg0, int code) {
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
             "  --                Stop flag parsing\n",
-           arg0, arg0);
+           arg0, arg0, arg0);
 
     exit(code);
 }
@@ -136,6 +137,19 @@ void dec(const NLNote *n) {
 }
 
 int main(int argc, char **argv) {
+    if (argc > 1 && !strcmp(argv[1], "close")) {
+        if (argc != 3) usage(argv[0], 2);
+        return close_note(argv[2]);
+    }
+    if (argc > 1 && !strcmp(argv[1], "getcapabilities")) {
+        if (argc != 2) usage(argv[0], 2);
+        return get_capabilities();
+    }
+    if (argc > 1 && !strcmp(argv[1], "getserverinfo")) {
+        if (argc != 2) usage(argv[0], 2);
+        return get_server_information();
+    }
+
     notcat_getopt(argc, argv);
 
     NLNoteCallbacks cbs = {
