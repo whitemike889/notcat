@@ -96,13 +96,13 @@ extern int get_server_information() {
     GDBusProxy *proxy = connect();
     GVariant *result = call(proxy, "GetServerInformation", NULL);
 
-    printf("name:\t%s\n", g_variant_get_string(
+    printf("name: %s\n", g_variant_get_string(
                 g_variant_get_child_value(result, 0), NULL));
-    printf("vendor:\t%s\n", g_variant_get_string(
+    printf("vendor: %s\n", g_variant_get_string(
                 g_variant_get_child_value(result, 1), NULL));
-    printf("version:\t%s\n", g_variant_get_string(
+    printf("version: %s\n", g_variant_get_string(
                 g_variant_get_child_value(result, 2), NULL));
-    printf("spec version:\t%s\n", g_variant_get_string(
+    printf("spec: %s\n", g_variant_get_string(
                 g_variant_get_child_value(result, 3), NULL));
 
     return 0;
