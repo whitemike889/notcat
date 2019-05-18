@@ -39,12 +39,15 @@ static char *on_close_opt = NULL;
 static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
             "  %s [-h | --help]\n"
-            "  %s [-se] [--onnotify=<cmd>] [--onclose=<cmd>] [format]...\n"
             "  %s [ close <id> | getcapabilities | getserverinfo ]\n"
+            "  %s [-se] [--capabilities=<cap1>,<cap2>...] \\\n"
+            "           [--onnotify=<cmd>] [--onclose=<cmd>] [--] [format]...\n"
             "\n"
             "Options:\n"
-            "  --onnotify=<cmd>  Command to run on each notification created\n"
-            "  --onclose=<cmd>   Command to run on each notification closed\n"
+            "  --capabilities=<cap1>,<cap2>...\n"
+            "             Additional capabilities to advertise\n\n"
+            "  --onnotify=<cmd>  Command to run on each notification created\n\n"
+            "  --onclose=<cmd>   Command to run on each notification closed\n\n"
             "  -s, --shell       Execute commands in a subshell\n"
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
@@ -94,6 +97,16 @@ static void notcat_getopt(int argc, char **argv) {
                 on_notify_opt = arg + 9;
             } else if (!strncmp("onclose=", arg, 8)) {
                 on_close_opt = arg + 8;
+            } else if (!strncmp("capabilities=", arg, 13)) {
+                char *ce, *cc = arg + 13;
+                for (ce = cc; *ce; ce++) {
+                    if (*ce != ',')
+                        continue;
+                    *ce = '\0';
+                    add_capability(cc);
+                    cc = ce + 1;
+                }
+                add_capability(cc);
             } else if (!strcmp("shell", arg)) {
                 shell_run_opt = 1;
             } else if (!strcmp("env", arg)) {
@@ -151,6 +164,9 @@ int main(int argc, char **argv) {
     }
 
     notcat_getopt(argc, argv);
+    if (use_env_opt) {
+        add_capability("body");
+    } else fmt_capabilities();
 
     NLNoteCallbacks cbs = {
         .notify = inc,
@@ -163,6 +179,6 @@ int main(int argc, char **argv) {
         .version = "0.2"
     };
 
-    notlib_run(cbs, &info);
+    notlib_run(cbs, capabilities, &info);
     return 0;
 }

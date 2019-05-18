@@ -6,10 +6,13 @@ notcat \- print notifications
 [\fB\-h\fR | \fB\-\-help\fR]
 .br
 .B notcat
-[\fB\-se\fR] \fR[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR] [\-\-] [\fIFORMAT\fR]...
+[ \fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR ]
 .br
 .B notcat
-[ \fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR ]
+[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR]
+[\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...]
+.br
+       [\fB\-se\fR] [\fB\-\-\fR] [\fIFORMAT ARGUMENTS\fR]...
 .SH DESCRIPTION
 .B notcat
 is a D-Bus notification daemon which formats and prints received
@@ -27,30 +30,30 @@ If
 finds one of the following format sequences among them, then it will
 replace it in-place with the appropriate value, \fBprintf\fR-style.
 .TP
-%%
+\fB%%\fR
 A literal "%"
 .TP
-%i
+\fB%i\fR
 Notification ID
 .TP
-%a
+\fB%a\fR
 App name
 .TP
-%s
+\fB%s\fR
 Summary
 .TP
-%B
+\fB%B\fR
 Body text, with newlines replaced with spaces to maintain printing
 one line per notification
 .TP
-%e
+\fB%e\fR
 Expiration timeout in milliseconds; 0 indicates "no timeout", and -1
 indicates "timeout is up to the notification server"
 .TP
-%u
+\fB%u\fR
 Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
 .TP
-%(h:\fINAME\fR)
+\fB%(h:\fINAME\fB)\fR
 Hint value with the given
 .I NAME
 .PP
@@ -64,22 +67,22 @@ If the
 .B \-e
 argument is supplied, then instead of the formatted arguments, subcommands are invoked with the following environment variables set to the appropriate values:
 .TP
-NOTE_ID
+$\fINOTE_ID\fR
 Notification ID
 .TP
-NOTE_APP_NAME
+$\fINOTE_APP_NAME\fR
 App name
 .TP
-NOTE_SUMMARY
+$\fINOTE_SUMMARY\fR
 Summary
 .TP
-NOTE_BODY
+$\fINOTE_BODY\fR
 Notification body
 .TP
-NOTE_URGENCY
+$\fINOTE_URGENCY\fR
 Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
 .TP
-NOTE_TIMEOUT
+$\fINOTE_TIMEOUT\fR
 Expiration timeout in milliseconds; 0 indicates "no timeout", and -1
 indicates "timeout is up to the notification server"
 .PP
@@ -112,6 +115,20 @@ and
 .B \-\-onclose
 information about notifications through the environment, rather than
 using formatted arguments.
+.TP
+\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...
+Additional capabilities for
+.B notcat
+to advertise.
+By default,
+.B notcat
+tries to advertise a reasonable set of capabilities, either (if
+.B \-e
+is not set) based on the
+.I FORMAT
+arguments, or based on the set of environment variables that
+.B notcat
+passes to subcommands.
 .TP
 \fB\-\-onnotify=\fICMD\fR
 Run the command
