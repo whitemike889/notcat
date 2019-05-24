@@ -60,6 +60,7 @@ extern void add_capability(char *);
 
 // client.c
 
+extern int send_note(int argc, char **argv);
 extern int close_note(char *arg);
 extern int get_capabilities();
 extern int get_server_information();

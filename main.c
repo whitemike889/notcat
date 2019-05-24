@@ -39,7 +39,7 @@ static char *on_close_opt = NULL;
 static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
             "  %s [-h | --help]\n"
-            "  %s [ close <id> | getcapabilities | getserverinfo ]\n"
+            "  %s [ send <opts> | close <id> | getcapabilities | getserverinfo ]\n"
             "  %s [-se] [--capabilities=<cap1>,<cap2>...] \\\n"
             "           [--onnotify=<cmd>] [--onclose=<cmd>] [--] [format]...\n"
             "\n"
@@ -51,7 +51,10 @@ static void usage(char *arg0, int code) {
             "  -s, --shell       Execute commands in a subshell\n"
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
-            "  --                Stop flag parsing\n",
+            "  --                Stop flag parsing\n"
+            "\n"
+            "For more detailed information and options for the 'send' subcommand,\n"
+            "consult `man 1 notcat`.\n",
            arg0, arg0, arg0);
 
     exit(code);
@@ -150,6 +153,9 @@ void dec(const NLNote *n) {
 }
 
 int main(int argc, char **argv) {
+    if (argc > 1 && !strcmp(argv[1], "send")) {
+        return send_note(argc, argv);
+    }
     if (argc > 1 && !strcmp(argv[1], "close")) {
         if (argc != 3) usage(argv[0], 2);
         return close_note(argv[2]);

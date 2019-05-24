@@ -8,6 +8,10 @@ notcat \- print notifications
 .B notcat
 [ \fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR ]
 .br
+.B notcat send
+[\fB-aAchiItu\fR \fIVALUE\fR]... [\fB-p\fR] [\fB--\fR] [\fISUMMARY\fR]
+[\fIBODY\fR]
+.br
 .B notcat
 [\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR]
 [\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...]
@@ -176,6 +180,61 @@ Get the capabilities of the notification server.
 .TP
 \fBgetserverinfo\fR
 Get basic information about the notification server.
+.TP
+\fBsend\fR
+Send a notification to the server.
+In addition to any options, \fBsend\fR requires at most two arguments
+specifying the notification summary and body, respectively.
+If only one argument is given, it is used as the summary.
+.PP
+There are several options for the
+.B send
+command, described as follows.
+.SS SEND OPTIONS
+.PP
+.B notcat send
+supports a relatively standard set of notification options, with some
+allowances for extra flexibility.
+These options correspond with behavior found in the D-Bus
+Notifications API documentation.
+.TP
+\fB-a\fR, \fB--app-name=\fINAME\fR
+App name.
+.TP
+\fB-A\fR, \fB--actions=\fIACTION\fB,\fIKEY\fB:\fINAME\fR...
+Actions.
+Multiple comma-separated actions may be supplied in one arg, and if
+an action is provided as a \fIKEY\fR:\fINAME\fR, then \fINAME\fR will
+be used in the notification display.
+.TP
+\fB-c\fR, \fB--category=\fICATEGORY\fR
+Notification category, which should be one of the values given in the
+D-Bus Notifications API documentation.
+.TP
+\fB-h\fR, \fB--hint=\fITYPE\fB:\fINAME\fB:\fIVALUE\fR
+A hint, which is an arbitrary key-value pair.
+.B notcat
+uses GLib's type format strings as well as parser to get values from
+this argument.
+Most likely types to be useful are: \fBb\fR, boolean; \fBy\fR, byte;
+\fBs\fR, string; \fBi\fR, 32-bit int; and \fBu\fR, 32-bit unsigned
+int.
+.TP
+\fB-i\fR, \fB--id=\fIID\fR
+Notification ID to replace (if currently in use).
+Must be a non-negative integer.
+.TP
+\fB-I\fR, \fB--icon=\fIICON\fR
+Name or path of the icon to display with this notification.
+.TP
+\fB-p\fR, \fB--print-id\fR
+If set,
+.B notcat
+will print the ID of the notification after sending it.
+.TP
+\fB-u\fR, \fB--urgency=\fIURGENCY\fR
+Urgency of the notification.
+May be one of \fBlow\fR, \fBnormal\fR, or \fBcritical\fR.
 .SH EXAMPLES
 Simple invocation to print notification summaries and bodies as they
 arrive, and clear the most recent line when all notifications are
