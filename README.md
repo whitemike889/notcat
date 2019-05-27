@@ -62,6 +62,7 @@ Supported format sequences are:
 %B          body
 %e          expiration timeout
 %u          urgency
+%n          type of event
 %(h:NAME)   hint by NAME
 ```
 

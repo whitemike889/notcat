@@ -39,6 +39,8 @@
  * urgency          %u
  */
 
+char *current_event = "ERROR";
+
 extern char *str_urgency(const enum NLUrgency u) {
     switch (u) {
         case URG_NONE: return "NONE";
@@ -126,8 +128,8 @@ static void put_hint(buffer *buf, const NLNote *n, const char *name) {
 
 extern void fmt_note_buf(buffer *buf, const char *fmt, const NLNote *n) {
     const char *c;
-    char state = NORMAL;
     char *body = NULL;
+    char state = NORMAL;
 
     for (c = fmt; *c; c++) {
         switch (state) {
@@ -186,6 +188,9 @@ extern void fmt_note_buf(buffer *buf, const char *fmt, const NLNote *n) {
                 break;
             case 'u':
                 put_urgency(buf, n->urgency);
+                break;
+            case 'n':
+                put_str(buf, current_event);
                 break;
             case '%':
                 put_char(buf, '%');

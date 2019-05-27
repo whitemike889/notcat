@@ -81,21 +81,25 @@ extern void run_cmd(char *cmd, const NLNote *n) {
     }
     cmd_argv[fmt_len + prefix_len] = NULL;
 
-    if (use_env_opt && n != NULL) {
-        char str[12];  // big enough to store a 32-bit int
+    if (use_env_opt) {
+        setenv("NOTCAT_EVENT", current_event, 1);
 
-        setenv("NOTE_APP_NAME", n->appname, 1);
-        setenv("NOTE_SUMMARY", n->summary, 1);
-        setenv("NOTE_BODY", n->body, 1);
-        setenv("NOTE_URGENCY", str_urgency(n->urgency), 1);
+        if (n != NULL) {
+            char str[12];  // big enough to store a 32-bit int
 
-        snprintf(str, 12, "%u", n->id);
-        setenv("NOTE_ID", str, 1);
+            setenv("NOTE_APP_NAME", n->appname, 1);
+            setenv("NOTE_SUMMARY", n->summary, 1);
+            setenv("NOTE_BODY", n->body, 1);
+            setenv("NOTE_URGENCY", str_urgency(n->urgency), 1);
 
-        snprintf(str, 12, "%d", n->timeout);
-        setenv("NOTE_TIMEOUT", str, 1);
+            snprintf(str, 12, "%u", n->id);
+            setenv("NOTE_ID", str, 1);
 
-        // TODO: Figure out a sensible way to do hints
+            snprintf(str, 12, "%d", n->timeout);
+            setenv("NOTE_TIMEOUT", str, 1);
+
+            // TODO: Figure out a sensible way to do hints
+        }
     }
 
     if (!fork()) {

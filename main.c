@@ -130,7 +130,8 @@ static void notcat_getopt(int argc, char **argv) {
 
 static uint32_t rc = 0;
 
-void inc(const NLNote *n) {
+void on_notify(const NLNote *n) {
+    current_event = "notify";
     ++rc;
     if (!strcmp(on_notify_opt, "echo") && !shell_run_opt) {
         print_note(n);
@@ -140,7 +141,8 @@ void inc(const NLNote *n) {
     fflush(stdout);
 }
 
-void dec(const NLNote *n) {
+void on_close(const NLNote *n) {
+    current_event = "close";
     --rc;
     if (on_close_opt) {
         if (!strcmp(on_close_opt, "echo") && !shell_run_opt) {
@@ -150,6 +152,7 @@ void dec(const NLNote *n) {
         }
     }
     if (rc == 0 && on_empty_opt) {
+        current_event = "empty";
         if (!strcmp(on_empty_opt, "echo") && !shell_run_opt) {
             printf("\n");
         } else if (*on_empty_opt) {
@@ -157,6 +160,11 @@ void dec(const NLNote *n) {
         }
     }
     fflush(stdout);
+}
+
+void on_replace(const NLNote *n) {
+    current_event = "notify";
+    print_note(n);
 }
 
 int main(int argc, char **argv) {
@@ -182,9 +190,9 @@ int main(int argc, char **argv) {
     } else fmt_capabilities();
 
     NLNoteCallbacks cbs = {
-        .notify = inc,
-        .close = dec,
-        .replace = print_note
+        .notify = on_notify,
+        .close = on_close,
+        .replace = on_replace
     };
     NLServerInfo info = {
         .app_name = "notcat",

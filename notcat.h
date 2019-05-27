@@ -37,6 +37,8 @@ extern void put_char(buffer *, char);
 
 // fmt.c
 
+extern char *current_event;
+
 extern char *str_urgency(const enum NLUrgency urgency);
 extern void fmt_note_buf(buffer *buf, const char *fmt, const NLNote *n);
 extern char *fmt_note(const char *fmt, const NLNote *n);

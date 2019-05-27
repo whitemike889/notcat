@@ -57,6 +57,10 @@ indicates "timeout is up to the notification server"
 \fB%u\fR
 Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
 .TP
+\fB%n\fR
+Type of notcat event (i.e., which subcommand is being called); either
+"notify" or "close".
+.TP
 \fB%(h:\fINAME\fB)\fR
 Hint value with the given
 .I NAME
@@ -85,6 +89,10 @@ Notification body
 .TP
 $\fINOTE_URGENCY\fR
 Urgency; either 'LOW', 'NORMAL', or 'CRITICAL'
+.TP
+$\fINOTCAT_EVENT\fR
+Type of notcat event (i.e., which subcommand is being called); either
+"notify", "close", or "empty".
 .TP
 $\fINOTE_TIMEOUT\fR
 Expiration timeout in milliseconds; 0 indicates "no timeout", and -1
