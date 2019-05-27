@@ -31,23 +31,24 @@
  *  - markupfmt
  */
 
-static char *DEFAULT_on_notify_opt = "echo";
-static char *DEFAULT_on_close_opt = "";
-static char *on_notify_opt = NULL;
+static char *on_notify_opt = "echo";
 static char *on_close_opt = NULL;
+static char *on_empty_opt = NULL;
 
 static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
             "  %s [-h | --help]\n"
             "  %s [ send <opts> | close <id> | getcapabilities | getserverinfo ]\n"
             "  %s [-se] [--capabilities=<cap1>,<cap2>...] \\\n"
-            "           [--onnotify=<cmd>] [--onclose=<cmd>] [--] [format]...\n"
+            "           [--on-notify=<cmd>] [--on-close=<cmd>] [--on-empty=<cmd>] \\\n"
+            "           [--] [format]...\n"
             "\n"
             "Options:\n"
             "  --capabilities=<cap1>,<cap2>...\n"
             "             Additional capabilities to advertise\n\n"
-            "  --onnotify=<cmd>  Command to run on each notification created\n\n"
-            "  --onclose=<cmd>   Command to run on each notification closed\n\n"
+            "  --on-notify=<cmd>  Command to run on each notification created\n\n"
+            "  --on-close=<cmd>   Command to run on each notification closed\n\n"
+            "  --on-empty=<cmd>   Command to run when no notifications remain\n\n"
             "  -s, --shell       Execute commands in a subshell\n"
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
@@ -61,9 +62,6 @@ static void usage(char *arg0, int code) {
 }
 
 static void notcat_getopt(int argc, char **argv) {
-    on_notify_opt = DEFAULT_on_notify_opt;
-    on_close_opt = DEFAULT_on_close_opt;
-
     size_t fo_idx = 0;
     char *arg0 = argv[0];
 
@@ -96,10 +94,12 @@ static void notcat_getopt(int argc, char **argv) {
             }
 
             arg = arg + 2;
-            if (!strncmp("onnotify=", arg, 9)) {
-                on_notify_opt = arg + 9;
-            } else if (!strncmp("onclose=", arg, 8)) {
-                on_close_opt = arg + 8;
+            if (!strncmp("on-notify=", arg, 10)) {
+                on_notify_opt = arg + 10;
+            } else if (!strncmp("on-close=", arg, 9)) {
+                on_close_opt = arg + 9;
+            } else if (!strncmp("on-empty=", arg, 9)) {
+                on_empty_opt = arg + 9;
             } else if (!strncmp("capabilities=", arg, 13)) {
                 char *ce, *cc = arg + 13;
                 for (ce = cc; *ce; ce++) {
@@ -142,12 +142,19 @@ void inc(const NLNote *n) {
 
 void dec(const NLNote *n) {
     --rc;
-    if (on_close_opt == DEFAULT_on_close_opt) {
-        if (rc == 0) {
-            printf("\n");
+    if (on_close_opt) {
+        if (!strcmp(on_close_opt, "echo") && !shell_run_opt) {
+            print_note(n);
+        } else if (*on_close_opt) {
+            run_cmd(on_close_opt, n);
         }
-    } else if (*on_close_opt) {
-        run_cmd(on_close_opt, n);
+    }
+    if (rc == 0 && on_empty_opt) {
+        if (!strcmp(on_empty_opt, "echo") && !shell_run_opt) {
+            printf("\n");
+        } else if (*on_empty_opt) {
+            run_cmd(on_empty_opt, NULL);
+        }
     }
     fflush(stdout);
 }

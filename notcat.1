@@ -6,17 +6,18 @@ notcat \- print notifications
 [\fB\-h\fR | \fB\-\-help\fR]
 .br
 .B notcat
-[ \fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR ]
+[\fBclose\fR \fIID\fR | \fBgetcapabilities\fR | \fBgetserverinfo\fR]
 .br
 .B notcat send
 [\fB-aAchiItu\fR \fIVALUE\fR]... [\fB-p\fR] [\fB--\fR] [\fISUMMARY\fR]
 [\fIBODY\fR]
 .br
 .B notcat
-[\fB\-\-onnotify=\fICMD\fR] [\fB\-\-onclose=\fICMD\fR]
-[\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...]
+[\fB\-se\fR] [\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...] \\
 .br
-       [\fB\-se\fR] [\fB\-\-\fR] [\fIFORMAT ARGUMENTS\fR]...
+       [\fB\-\-on\-notify=\fICMD\fR] [\fB\-\-on\-close=\fICMD\fR] [\fB\-\-on\-empty=\fICMD\fR] \\
+.br
+       [\fB\-\-\fR] [\fIFORMAT ARGUMENTS\fR]...
 .SH DESCRIPTION
 .B notcat
 is a D-Bus notification daemon which formats and prints received
@@ -25,9 +26,8 @@ notifications are received and deleted.
 .PP
 The
 .I FORMAT
-arguments control the output of \fBnotcat\fR, or, if
-\fB\-\-onnotify\fR/\fB\-\-onclose\fR is supplied, the arguments provided
-to invoked subcommands.
+arguments control how notifications are formatted when they are
+printed or executed in subcommands.
 They support arbitrary strings.
 If
 .B notcat
@@ -94,7 +94,7 @@ Arbitrary hints are not yet supported with the
 .B \-e
 flag.
 .B \-e
-is useless when used without \fB\-\-onnotify\fR, because
+is useless when used without explicit subcommands, because
 \fBnotcat\fR's default behavior only introspects the
 .I FORMAT
 arguments.
@@ -104,21 +104,13 @@ arguments.
 Display help and exit.
 .TP
 \fB\-s\fR, \fB\-\-shell\fR
-Run subcommands given via
-.B \-\-onnotify
-and
-.B \-\-onclose
-within a subshell, using
+Run subcommands within a subshell, using
 .IP
 $\fISHELL\fR \-c $\fICMD\fR
 .TP
 \fB\-e\fR, \fB\-\-env\fR
-Pass subcommands given via
-.B \-\-onnotify
-and
-.B \-\-onclose
-information about notifications through the environment, rather than
-using formatted arguments.
+Pass subcommands information about notifications through the
+environment, rather than using formatted arguments.
 .TP
 \fB\-\-capabilities=\fICAP\fR,\fICAP\fR...
 Additional capabilities for
@@ -134,7 +126,7 @@ arguments, or based on the set of environment variables that
 .B notcat
 passes to subcommands.
 .TP
-\fB\-\-onnotify=\fICMD\fR
+\fB\-\-on\-notify=\fICMD\fR
 Run the command
 .I CMD
 each time a notification is created or replaced.
@@ -147,7 +139,7 @@ If not provided,
 .B notcat
 defaults to its built-in '\fBecho\fR'.
 .TP
-\fB\-\-onclose=\fICMD\fR
+\fB\-\-on\-close=\fICMD\fR
 Run the command
 .I CMD
 each time a notification is closed.
@@ -156,15 +148,26 @@ arguments set to the interpolated
 .I FORMAT
 arguments provided to \fBnotcat\fR.
 .IP
-If not provided, then \fBnotcat\fR's default behavior is to, if no
-notifications are left open, print an empty line, else nothing.
+If not provided, then \fBnotcat\fR's default behavior is to do
+nothing.
+.TP
+\fB\-\-on\-empty=\fICMD\fR
+Run the command
+.I CMD
+whenever the last notification is closed, and no more notifications
+remain.
+The command is invoked via \fBexecve\fR.
+Unlike the \fB\-\-on\-notify\fR and \fB\-\-on\-close\fR, since
+the \fB\-\-on\-empty\fR event isn't associated with any particular
+notification, it is run without arguments.
+.IP
+If not provided, then \fBnotcat\fR's behavior is to do nothing.
 .TP
 \fB\-\-\fR
 Stop option parsing.
 This may be used in case there are
 .I FORMAT
-arguments which would get inappropriately parsed as options to
-\fBnotcat\fR.
+arguments which would otherwise be parsed as options to \fBnotcat\fR.
 .SH CLIENT COMMANDS
 The
 .B notcat
@@ -214,8 +217,8 @@ D-Bus Notifications API documentation.
 \fB-h\fR, \fB--hint=\fITYPE\fB:\fINAME\fB:\fIVALUE\fR
 A hint, which is an arbitrary key-value pair.
 .B notcat
-uses GLib's type format strings as well as parser to get values from
-this argument.
+uses GLib's type format strings and parser to get values from this
+argument.
 Most likely types to be useful are: \fBb\fR, boolean; \fBy\fR, byte;
 \fBs\fR, string; \fBi\fR, 32-bit int; and \fBu\fR, 32-bit unsigned
 int.
@@ -237,23 +240,25 @@ Urgency of the notification.
 May be one of \fBlow\fR, \fBnormal\fR, or \fBcritical\fR.
 .SH EXAMPLES
 Simple invocation to print notification summaries and bodies as they
-arrive, and clear the most recent line when all notifications are
-closed:
+arrive:
 .IP
 \fB$\fR notcat %s %B
 .PP
 Invocation that has the same behavior as above, but by invoking
-/bin/echo in a subshell on each notification:
+.B echo
+in a subshell on each notification:
 .IP
-\fB$\fR notcat \-s '\-\-onnotify=/bin/echo $*' %s %B
+\fB$\fR notcat \-s '\-\-on-notify=echo $*' %s %B
 .PP
 Note the trailing '$*' in the command; this is required for the
-invoked /bin/echo to receive the args from its calling shell.
+invoked
+.B echo
+to receive the args from its calling shell.
 .PP
 Invocation that has (roughly) the same behavior as above, but using
 environment variables this time:
 .IP
-\fB$\fR notcat \-se '\-\-onnotify=/bin/echo $NOTE_SUMMARY $NOTE_BODY'
+\fB$\fR notcat \-se '\-\-on-notify=echo $NOTE_SUMMARY $NOTE_BODY'
 .PP
 This invocation has the disadvantage of being somewhat more verbose,
 and also loses the automatic formatting that

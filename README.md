@@ -23,34 +23,29 @@ Notcat uses git submodules.  To properly clone and build:
 ```
 Usage:
   notcat [-h|--help]
-  notcat [-se] [--onnotify=<command>] [--onclose=<command>] [--] [format strings]...
+  notcat [send <opts> | close <id> | getcapabilities | getserverinfo]
+  notcat [-se] [--capabilities=<cap1>,<cap2>...] \
+            [--on-notify=<cmd>] [--on-close=<cmd>] [--on-empty=<cmd>] \
+            [--] [format]...
 
 Options:
-  --onnotify=<command>  Command to run on each notification created (default: echo)
-  --onclose=<command>   Command to run on each notification closed
-  -s, --shell           Execute commands in a subshell
+  --capabilities=<cap1>,<cap2>...
+            Additional capabilities to advertise
+
+  --on-notify=<command> Command to run on each notification created (default: echo)
+  --on-close=<command>  Command to run on each notification closed
+  --on-empty=<command>  Command to run when no notifications remain
+  -s, --shell           Execute subcommands in a subshell
   -e, --env             Pass notifications to commands in the environment
   -h, --help            This help text
   --                    Stop flag parsing
 ```
 
-## onnotify and onclose
+## --on-notify, --on-close, --on-empty
 
-Notcat can be execute arbitrary commands when notifications are received and closed via the `--onnotify` and `--onclose` flags, respectively.
+Notcat can be execute arbitrary subcommands when notifications are received and closed via the `--on-notify` and `--on-close` flags, respectively.  When the last notification is closed, the `--on-empty` subcommand is run after `--on-close`.
 
-At present, the commands invoked by `--onnotify` and `--onclose` are blocking -- for notcat, as well as anything that sends a notification while the commands are running.
-
-Notcat has built-in printing behavior, which it will use if `--onnotify=echo` and not `-s` (the default).  It will print each notification as it arrives, formatted using (if set) the notification's string-valued "format" hint, or the format args set on invocation.
-
-The built-in `echo` includes additional formatting as well:
-
- - It replaces newlines in the notification body with spaces, to keep notifications printed at one line each.
-
- - (Soon) It will strip markup from notification body text.
-
- - (Less soon) It will, based on a set of flags, format notification body text.  This should allow nicer piping into terminals, status bars, etc.
-
-By default, notcat's `--onclose` behavior is to simply print a newline when zero notifications are left open.
+At present, the commands invoked by `--on-notify`, `--on-close`, and `--on-empty` are blocking -- for notcat, as well as anything that sends a notification while the commands are running.
 
 
 ## Format strings
@@ -79,10 +74,10 @@ Planned future sequences are:
 %c          category
 ```
 
-When the `-e` flag is *not* set, format arguments are filled-in and passed 1:1 to executed commands.  For example, when a notification is sent to notcat executed as
+When the `-e` flag is *not* set, format arguments are filled-in and passed 1:1 to executed subcommands.  For example, when a notification is sent to notcat executed as
 
 ```
-$ notcat --onnotify=/bin/echo %s '%u %B'
+$ notcat --on-notify=/bin/echo %s '%u %B'
 ```
 
 notcat will execute the command as follows:
@@ -97,7 +92,9 @@ On the other hand, if the `-s` flag is also passed to the above notcat invocatio
 $SHELL -c /bin/echo notcat '<summary>' '<urgency> <body>'
 ```
 
-In this case, the command isn't very useful (simply echoing an empty line each time).  Figuring out how shells' `-c` flag works is left as an exercise for the reader. (The 'notcat' in the above is hard-coded, setting the `$0` of the executed subshell.)
+In this case, the subcommand isn't very useful (simply echoing an empty line each time).  Figuring out how shells' `-c` flag works is left as an exercise for the reader. (The 'notcat' in the above is hard-coded, setting the `$0` of the executed subshell.)
+
+The `--on-empty` subcommand, unlike the other two, takes no arguments at all, since it's not associated with any particular notification.
 
 
 ## Environment variables
@@ -130,12 +127,24 @@ $NOTE_SUMMARY
 $NOTE_BODY
 EOF
 
-$ notcat -e --onnotify=./post.sh
+$ notcat -e --on-notify=./post.sh
 ```
+
+
+## Client commands
+
+`notcat` can also be used to interact as a client with an already-running notification server.  Existing commands are:
+
+ - `close <ID>`: Close the notification with the given ID.
+
+ - `getcapabilities`: Get the capabilities of the notification server.
+
+ - `getserverinfo`: Get basic information about the notification server.
+
+ - `send`: Send a notification to the server.
 
 
 ## TODO
 
  - more format sequences and environment variables
  - markup "support", as far as it will go
- - 'notcli', for interacting with notcat "out-of-band"
