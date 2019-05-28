@@ -24,17 +24,23 @@ Notcat uses git submodules.  To properly clone and build:
 Usage:
   notcat [-h|--help]
   notcat [send <opts> | close <id> | getcapabilities | getserverinfo]
-  notcat [-se] [--capabilities=<cap1>,<cap2>...] \
+  notcat [-se] [-t <timeout>] [--capabilities=<cap1>,<cap2>...] \
             [--on-notify=<cmd>] [--on-close=<cmd>] [--on-empty=<cmd>] \
             [--] [format]...
 
 Options:
+  --on-notify=<command> Command to run on each notification created (default: echo)
+
+  --on-close=<command>  Command to run on each notification closed
+
+  --on-empty=<command>  Command to run when no notifications remain
+
   --capabilities=<cap1>,<cap2>...
             Additional capabilities to advertise
 
-  --on-notify=<command> Command to run on each notification created (default: echo)
-  --on-close=<command>  Command to run on each notification closed
-  --on-empty=<command>  Command to run when no notifications remain
+  -t, --timeout=<timeout>
+            Default timeout for notifications in milliseconds
+
   -s, --shell           Execute subcommands in a subshell
   -e, --env             Pass notifications to commands in the environment
   -h, --help            This help text

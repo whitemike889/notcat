@@ -13,7 +13,7 @@ notcat \- print notifications
 [\fIBODY\fR]
 .br
 .B notcat
-[\fB\-se\fR] [\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...] \\
+[\fB\-se\fR] [\fB\-t\fR \fITIMEOUT\fR] [\fB\-\-capabilities=\fICAP\fR,\fICAP\fR...] \\
 .br
        [\fB\-\-on\-notify=\fICMD\fR] [\fB\-\-on\-close=\fICMD\fR] [\fB\-\-on\-empty=\fICMD\fR] \\
 .br
@@ -119,6 +119,11 @@ $\fISHELL\fR \-c $\fICMD\fR
 \fB\-e\fR, \fB\-\-env\fR
 Pass subcommands information about notifications through the
 environment, rather than using formatted arguments.
+.TP
+\fB\-t\fR, \fB\-\-timeout=\fITIMEOUT\fR
+Default timeout for notifications received by \fBnotcat\fR, expressed
+in milliseconds.
+This value must be expressible as a 32-bit integer.
 .TP
 \fB\-\-capabilities=\fICAP\fR,\fICAP\fR...
 Additional capabilities for

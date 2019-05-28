@@ -38,17 +38,19 @@ static char *on_empty_opt = NULL;
 static void usage(char *arg0, int code) {
     fprintf(stderr, "Usage:\n"
             "  %s [-h | --help]\n"
-            "  %s [ send <opts> | close <id> | getcapabilities | getserverinfo ]\n"
-            "  %s [-se] [--capabilities=<cap1>,<cap2>...] \\\n"
+            "  %s [send <opts> | close <id> | getcapabilities | getserverinfo]\n"
+            "  %s [-se] [-t <timeout>] [--capabilities=<cap1>,<cap2>...] \\\n"
             "           [--on-notify=<cmd>] [--on-close=<cmd>] [--on-empty=<cmd>] \\\n"
             "           [--] [format]...\n"
             "\n"
             "Options:\n"
-            "  --capabilities=<cap1>,<cap2>...\n"
-            "             Additional capabilities to advertise\n\n"
             "  --on-notify=<cmd>  Command to run on each notification created\n\n"
             "  --on-close=<cmd>   Command to run on each notification closed\n\n"
             "  --on-empty=<cmd>   Command to run when no notifications remain\n\n"
+            "  --capabilities=<cap1>,<cap2>...\n"
+            "             Additional capabilities to advertise\n\n"
+            "  -t, --timeout=<timeout>\n"
+            "             Default timeout for notifications in milliseconds\n\n"
             "  -s, --shell       Execute commands in a subshell\n"
             "  -e, --env         Pass notifications to commands in the environment\n"
             "  -h, --help        This help text\n"
@@ -66,12 +68,21 @@ static void notcat_getopt(int argc, char **argv) {
     char *arg0 = argv[0];
 
     int av_idx;
-    int skip = 0;
+    char mode = '\0';
     for (av_idx = 1; av_idx < argc; av_idx++) {
         char *arg = argv[av_idx];
-        if (!skip && arg[0] == '-' && arg[1]) {
+        if (mode == 't') {
+            char *end;
+            long int to = strtoul(arg, &end, 10);
+            if (*arg == '\0' || *end != '\0' || to <= 0)
+                usage(arg0, 2);
+            nl_set_default_timeout((unsigned int)to);
+            mode = '\0';
+            continue;
+        }
+        if (mode != '-' && arg[0] == '-' && arg[1]) {
             if (arg[1] == '-' && !arg[2]) {
-                skip = 1;
+                mode = '-';
                 continue;
             }
             if (arg[1] != '-') {
@@ -83,6 +94,9 @@ static void notcat_getopt(int argc, char **argv) {
                         break;
                     case 'e':
                         use_env_opt = 1;
+                        break;
+                    case 't':
+                        mode = 't';
                         break;
                     case 'h':
                         usage(arg0, 0);
@@ -100,6 +114,12 @@ static void notcat_getopt(int argc, char **argv) {
                 on_close_opt = arg + 9;
             } else if (!strncmp("on-empty=", arg, 9)) {
                 on_empty_opt = arg + 9;
+            } else if (!strncmp("timeout=", arg, 8)) {
+                char *end;
+                long int to = strtoul(arg + 8, &end, 10);
+                if (arg[8] == '\0' || *end != '\0' || to <= 0)
+                    usage(arg0, 2);
+                nl_set_default_timeout((unsigned int)to);
             } else if (!strncmp("capabilities=", arg, 13)) {
                 char *ce, *cc = arg + 13;
                 for (ce = cc; *ce; ce++) {
